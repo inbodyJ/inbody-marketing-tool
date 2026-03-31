@@ -40,7 +40,9 @@
       "Bash(wmic process:*)",
       "Bash(tasklist /FI \"PID eq 4808\")",
       "Bash(tasklist /FI \"PID eq 12784\")",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(cd:*)",
+      "Bash(start:*)"
     ]
   }
 }
