@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/callback",
+      "destination": "https://inbody-marketing-tool-production.up.railway.app/api/canva/callback"
+    }
+  ]
+}
