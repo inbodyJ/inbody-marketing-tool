@@ -2579,3 +2579,17 @@ if __name__ == "__main__":
         logger.warning("yt-dlp가 설치되어 있지 않습니다: pip install yt-dlp")
 
     app.run(host="0.0.0.0", port=port, debug=debug)
+
+from flask import request
+
+@app.route("/callback")
+def callback():
+    code = request.args.get("code")
+    
+    if not code:
+        return {"error": "No code received"}
+    
+    return {
+        "message": "로그인 성공!",
+        "code": code
+    }
