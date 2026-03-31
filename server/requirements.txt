@@ -10,3 +10,4 @@ requests
 python-pptx
 pymupdf
 Pillow
+youtube-transcript-api
