@@ -1,0 +1,171 @@
+<!-- brand.html — 브랜드 이미지 생성 -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-i18n="brand.title">브랜드 이미지 생성</h1>
+    <p class="page-subtitle" data-i18n="brand.subtitle">인바디 브랜드 템플릿으로 1080×1080 SNS 이미지를 생성합니다.</p>
+  </div>
+</div>
+
+<div class="brand-layout">
+
+  <!-- ── 왼쪽: 입력 폼 ── -->
+  <div class="brand-form-panel">
+
+    <!-- 템플릿 타입 -->
+    <div class="form-group">
+      <label class="form-label" data-i18n="brand.selectType">템플릿 타입 선택</label>
+      <div class="brand-type-grid" id="brand-type-grid">
+        <button class="brand-type-card active" data-type="a" type="button">
+          <div class="brand-type-thumb brand-thumb-a"></div>
+          <div class="brand-type-info">
+            <div class="brand-type-name">Type A</div>
+            <div class="brand-type-desc" data-i18n="brand.typeA">화이트 클린</div>
+          </div>
+        </button>
+        <button class="brand-type-card" data-type="b" type="button">
+          <div class="brand-type-thumb brand-thumb-b"></div>
+          <div class="brand-type-info">
+            <div class="brand-type-name">Type B</div>
+            <div class="brand-type-desc" data-i18n="brand.typeB">다크 프리미엄</div>
+          </div>
+        </button>
+        <button class="brand-type-card" data-type="c" type="button">
+          <div class="brand-type-thumb brand-thumb-c"></div>
+          <div class="brand-type-info">
+            <div class="brand-type-name">Type C</div>
+            <div class="brand-type-desc" data-i18n="brand.typeC">아이스버그</div>
+          </div>
+        </button>
+        <button class="brand-type-card" data-type="d" type="button">
+          <div class="brand-type-thumb brand-thumb-d"></div>
+          <div class="brand-type-info">
+            <div class="brand-type-name">Type D</div>
+            <div class="brand-type-desc" data-i18n="brand.typeD">웨이브 데이터</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- 헤드라인 -->
+    <div class="form-group">
+      <label class="form-label" for="brand-headline">
+        <span data-i18n="brand.headline">헤드라인</span>
+        <span class="badge badge-red" style="margin-left:4px;font-size:11px;">필수</span>
+      </label>
+      <input class="form-input" type="text" id="brand-headline"
+             placeholder="체성분 분석의 기준" maxlength="40"
+             data-i18n-placeholder="brand.headlinePlaceholder" />
+      <div class="form-hint">
+        <span id="brand-headline-count">0</span> / 40
+      </div>
+    </div>
+
+    <!-- 본문 -->
+    <div class="form-group">
+      <label class="form-label" for="brand-body-copy">
+        <span data-i18n="brand.bodyCopy">본문</span>
+        <span class="form-optional" data-i18n="brand.optional">(선택)</span>
+      </label>
+      <textarea class="form-input" id="brand-body-copy"
+                placeholder="InBody로 정확하게 측정하세요"
+                data-i18n-placeholder="brand.bodyCopyPlaceholder"
+                rows="3" maxlength="100"
+                style="resize:vertical;min-height:80px;"></textarea>
+      <div class="form-hint">
+        <span id="brand-body-count">0</span> / 100
+      </div>
+    </div>
+
+    <!-- 타입 라벨 -->
+    <div class="form-group">
+      <label class="form-label" for="brand-type-label">
+        <span data-i18n="brand.typeLabel">타입 라벨</span>
+        <span class="form-optional" data-i18n="brand.optional">(선택)</span>
+      </label>
+      <input class="form-input" type="text" id="brand-type-label"
+             placeholder="Type A · 체성분"
+             data-i18n-placeholder="brand.typeLabelPlaceholder"
+             maxlength="30" />
+    </div>
+
+    <!-- 이미지 업로드 -->
+    <div class="form-group">
+      <label class="form-label">
+        <span data-i18n="brand.image">배경 이미지</span>
+        <span class="form-optional" data-i18n="brand.optional">(선택)</span>
+      </label>
+      <div class="brand-upload-zone" id="brand-upload-zone">
+        <input type="file" id="brand-image-file" accept="image/*" hidden />
+        <!-- 초기 상태 -->
+        <div class="brand-upload-inner" id="brand-upload-inner">
+          <div style="font-size:28px;margin-bottom:8px;">🖼️</div>
+          <div class="brand-upload-text" data-i18n="brand.uploadHint">클릭하거나 드래그해서 이미지 업로드</div>
+          <div class="brand-upload-sub" data-i18n="brand.uploadSub">JPG, PNG, WEBP · 최대 10MB</div>
+        </div>
+        <!-- 업로드 후 썸네일 -->
+        <div class="brand-upload-preview" id="brand-upload-preview" hidden>
+          <img id="brand-upload-thumb" alt="preview"
+               style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />
+          <button class="brand-upload-remove" id="brand-upload-remove" type="button"
+                  title="제거">✕</button>
+        </div>
+        <!-- 업로드 진행 -->
+        <div class="brand-upload-uploading" id="brand-upload-uploading" hidden>
+          <div class="spinner" style="width:24px;height:24px;"></div>
+          <span data-i18n="brand.uploading">업로드 중...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 생성 버튼 -->
+    <button class="btn btn-primary" id="brand-generate-btn"
+            onclick="BrandGenerator.generate()"
+            style="width:100%;justify-content:center;padding:14px;">
+      <span id="brand-generate-icon">✨</span>
+      <span id="brand-generate-label" data-i18n="brand.generateBtn">이미지 생성</span>
+    </button>
+
+  </div><!-- /.brand-form-panel -->
+
+  <!-- ── 오른쪽: 미리보기 ── -->
+  <div class="brand-preview-panel">
+
+    <div class="brand-preview-header">
+      <span data-i18n="brand.preview">미리보기</span>
+      <span class="brand-preview-size">1080 × 1080</span>
+    </div>
+
+    <div class="brand-preview-box" id="brand-preview-box">
+
+      <!-- 초기 안내 -->
+      <div class="brand-preview-empty" id="brand-preview-empty">
+        <div style="font-size:48px;margin-bottom:12px;">🎨</div>
+        <p data-i18n-html="brand.previewEmpty">생성 버튼을 눌러<br>이미지를 만드세요</p>
+      </div>
+
+      <!-- 생성 중 -->
+      <div class="brand-preview-loading" id="brand-preview-loading" hidden>
+        <div class="spinner"></div>
+        <p data-i18n="brand.generating">이미지 생성 중...</p>
+      </div>
+
+      <!-- 결과 이미지 -->
+      <img class="brand-preview-img" id="brand-preview-img"
+           alt="generated brand image" hidden />
+
+    </div><!-- /.brand-preview-box -->
+
+    <!-- 액션 버튼 (결과 후 노출) -->
+    <div class="brand-preview-actions" id="brand-preview-actions" hidden>
+      <a class="btn btn-primary" id="brand-download-btn"
+         download="inbody-brand.png" style="text-decoration:none;">
+        ⬇ <span data-i18n="brand.downloadBtn">PNG 다운로드</span>
+      </a>
+      <button class="btn btn-outline" onclick="BrandGenerator.copyUrl()">
+        🔗 <span data-i18n="brand.copyUrl">URL 복사</span>
+      </button>
+    </div>
+
+  </div><!-- /.brand-preview-panel -->
+
+</div><!-- /.brand-layout -->

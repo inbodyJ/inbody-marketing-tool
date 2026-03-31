@@ -1,0 +1,708 @@
+<!-- =====================================================
+     pages/youtube.html — 유튜브 처리 (재구성)
+     ===================================================== -->
+
+<!-- 페이지 헤더 -->
+<div class="page-header">
+  <h1 class="page-title" data-i18n="youtube.title">유튜브 처리</h1>
+</div>
+
+<!-- ── 탭 바 ── -->
+<div class="yt-tabs">
+  <button class="yt-tab active" data-tab="thumbnail"
+          onclick="switchYoutubeTab('thumbnail')">
+    <span data-i18n="youtube.tabThumbnail">썸네일 제작</span>
+  </button>
+  <button class="yt-tab" data-tab="analysis"
+          onclick="switchYoutubeTab('analysis')">
+    <span data-i18n="youtube.tabAnalysis">영상 분석</span>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     탭 1: 썸네일 제작
+     ══════════════════════════════════════════ -->
+<div class="yt-panel" id="tab-thumbnail">
+  <div class="section-card">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title"
+            data-i18n="youtube.thumbnailTitle">유튜브 썸네일 제작</h2>
+        <p class="section-subtitle"
+           data-i18n="youtube.thumbnailDesc">
+          AI가 인바디 브랜드에 맞는 유튜브 썸네일을 자동으로 제작합니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="yt-thumb-layout">
+
+      <!-- 좌측: 입력 폼 -->
+      <div class="yt-thumb-form">
+
+        <div class="field-group">
+          <label class="field-label">
+            <span data-i18n="youtube.videoTitle">영상 제목</span>
+          </label>
+          <input type="text" id="yt-video-title"
+                 data-i18n-placeholder="youtube.videoTitlePh"
+                 placeholder="예: 인바디로 보는 체지방 감량 30일 후기"
+                 class="field-input">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">
+            <span data-i18n="youtube.videoTopic">영상 주제</span>
+          </label>
+          <input type="text" id="yt-video-topic"
+                 data-i18n-placeholder="youtube.videoTopicPh"
+                 placeholder="예: 체성분 분석, 다이어트 성공"
+                 class="field-input">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">
+            <span data-i18n="youtube.mainText">메인 텍스트</span>
+          </label>
+          <input type="text" id="yt-main-text"
+                 data-i18n-placeholder="youtube.mainTextPh"
+                 placeholder="예: 30일 만에 체지방 -5kg"
+                 class="field-input">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">
+            <span data-i18n="youtube.subText">서브 텍스트</span>
+          </label>
+          <input type="text" id="yt-sub-text"
+                 data-i18n-placeholder="youtube.subTextPh"
+                 placeholder="예: 인바디로 확인한 실제 변화"
+                 class="field-input">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">
+            <span data-i18n="youtube.thumbnailStyle">썸네일 스타일</span>
+          </label>
+          <select id="yt-thumb-style" class="field-select">
+            <option value="clickbait"
+                    data-i18n="youtube.styleClickbait">강렬한 (클릭 유도)</option>
+            <option value="clean" selected
+                    data-i18n="youtube.styleClean">깔끔한 (정보 전달)</option>
+            <option value="emotional"
+                    data-i18n="youtube.styleEmotional">감성적 (공감 유도)</option>
+            <option value="professional"
+                    data-i18n="youtube.styleProfessional">전문적 (신뢰감)</option>
+          </select>
+        </div>
+
+        <button id="btn-gen-thumbnail"
+                onclick="generateYoutubeThumbnail()"
+                data-i18n="youtube.generateThumbnail"
+                style="all:unset;display:block;width:100%;height:44px;background:var(--ib-primary);color:#fff;font-size:13px;font-weight:600;border-radius:var(--radius);text-align:center;cursor:pointer;box-sizing:border-box;line-height:44px;">
+          썸네일 생성
+        </button>
+      </div>
+
+      <!-- 우측: 미리보기 -->
+      <div class="yt-thumb-preview-wrap">
+        <p class="field-label"
+           data-i18n="youtube.thumbnailPreview">썸네일 미리보기</p>
+
+        <div class="yt-thumb-preview" id="yt-thumb-preview">
+          <div class="yt-thumb-empty">
+            <span style="font-size:2rem;">🎬</span>
+            <p data-i18n="youtube.thumbnailPreview">썸네일 미리보기</p>
+            <p style="font-size:11px;color:var(--color-text-muted);margin:0;">1280 × 720</p>
+          </div>
+        </div>
+
+        <!-- 액션 버튼 (생성 후 표시) -->
+        <div class="yt-thumb-actions" id="yt-thumb-actions"
+             style="display:none;">
+          <button onclick="generateYoutubeThumbnail()"
+                  data-i18n="youtube.regenerate"
+                  style="all:unset;padding:6px 14px;border:1px solid var(--color-border);border-radius:var(--radius);font-size:12px;color:var(--color-text);cursor:pointer;">재생성</button>
+          <button onclick="downloadThumbnail()"
+                  data-i18n="youtube.downloadThumb"
+                  style="all:unset;padding:6px 14px;border:1px solid var(--color-border);border-radius:var(--radius);font-size:12px;color:var(--color-text);cursor:pointer;">다운로드</button>
+          <button onclick="saveThumbnailAsAsset()"
+                  data-i18n="youtube.saveAsAsset"
+                  style="all:unset;padding:6px 14px;background:var(--ib-primary);color:#fff;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;">에셋으로 저장</button>
+        </div>
+
+        <!-- 생성된 프롬프트 (접힘) -->
+        <div id="yt-prompt-result" style="display:none;margin-top:12px;">
+          <button onclick="togglePromptBox()"
+                  style="all:unset;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-light);cursor:pointer;width:100%;padding:6px 0;">
+            <span id="prompt-toggle-icon">▶</span>
+            <span data-i18n="youtube.promptResult">생성된 프롬프트 보기</span>
+          </button>
+          <div id="yt-prompt-box" style="display:none;margin-top:6px;">
+            <div class="yt-prompt-header">
+              <button onclick="copyYoutubePrompt()"
+                      class="btn-copy"
+                      data-i18n="youtube.copyPrompt">복사</button>
+            </div>
+            <textarea id="yt-prompt-text" class="yt-prompt-textarea"
+                      readonly rows="4"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     탭 2: 영상 분석
+     ══════════════════════════════════════════ -->
+<div class="yt-panel" id="tab-analysis" style="display:none;">
+
+  <!-- URL 입력 -->
+  <div class="section-card">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title"
+            data-i18n="youtube.analysisTitle">영상 분석</h2>
+        <p class="section-subtitle"
+           data-i18n="youtube.analysisDesc">
+          유튜브 URL을 입력하면 AI가 영상을 분석하고 마케팅 활용 프롬프트를 생성합니다.
+        </p>
+        <!-- yt-dlp 연동 전 임시 안내 -->
+        <div style="display:inline-flex;align-items:center;gap:6px;background:#FFF3E0;border-radius:6px;padding:5px 10px;margin-top:8px;">
+          <span style="font-size:12px;">🔧</span>
+          <span style="font-size:11px;color:#7A4F00;"
+                data-i18n="youtube.analysisComingSoon">
+            yt-dlp 연동 후 자막 자동 추출 기능이 활성화됩니다.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <label class="field-label"
+           data-i18n="youtube.urlLabel">유튜브 URL</label>
+    <div class="yt-url-row">
+      <input type="text" id="yt-url-input"
+             data-i18n-placeholder="youtube.urlPlaceholder"
+             placeholder="https://www.youtube.com/watch?v=..."
+             class="field-input">
+      <button id="btn-start-analysis"
+              onclick="startYoutubeAnalysis()"
+              data-i18n="youtube.startAnalysis"
+              style="all:unset;height:44px;padding:0 20px;background:var(--ib-primary);color:#fff;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;box-sizing:border-box;font-family:inherit;white-space:nowrap;display:flex;align-items:center;flex-shrink:0;">
+        ▶ 영상 분석 시작
+      </button>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:6px;">
+      <span style="font-size:11px;color:var(--color-text-light);">✓ youtube.com/watch?v=...</span>
+      <span style="font-size:11px;color:var(--color-text-light);">✓ youtu.be/...</span>
+    </div>
+  </div>
+
+  <!-- 분석 결과 (처음엔 숨김) -->
+  <div class="section-card" id="analysis-result-section"
+       style="display:none; margin-top:16px;">
+    <div class="section-header">
+      <h2 class="section-title"
+          data-i18n="youtube.analysisResult">분석 결과</h2>
+    </div>
+
+    <div class="analysis-block">
+      <h3 class="analysis-block-title"
+          data-i18n="youtube.videoSummary">영상 요약</h3>
+      <p id="analysis-summary" class="analysis-text"></p>
+    </div>
+
+    <div class="analysis-block">
+      <h3 class="analysis-block-title"
+          data-i18n="youtube.keyPoints">핵심 포인트</h3>
+      <ul id="analysis-keypoints" class="analysis-list"></ul>
+    </div>
+
+    <div class="analysis-block">
+      <h3 class="analysis-block-title"
+          data-i18n="youtube.marketingPrompts">마케팅 활용 프롬프트</h3>
+      <div class="prompt-cards" id="prompt-cards"></div>
+    </div>
+  </div>
+
+  <!-- 처리 히스토리 -->
+  <div class="section-card" id="history-section" style="margin-top:16px;">
+    <div class="section-header">
+      <h2 class="section-title"
+          data-i18n="youtube.historyTitle">처리 히스토리</h2>
+      <span id="history-count" class="history-count">0</span>
+    </div>
+    <div id="history-list">
+      <div class="empty-state" style="padding:3rem 0;">
+        <div class="empty-icon">🎬</div>
+        <p class="empty-title"
+           data-i18n="youtube.noHistory">처리된 영상이 없습니다.</p>
+        <p class="empty-desc"
+           data-i18n="youtube.noHistoryDesc">
+          유튜브 URL을 입력하면 자동으로 처리 내역이 쌓입니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 공통 스타일 ══ -->
+<style>
+/* ── 섹션 카드 ── */
+.section-card {
+  background: var(--color-white);
+  border: 0.5px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 0.5px solid var(--color-border);
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+.section-desc,
+.section-subtitle {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+/* ── 폼 요소 ── */
+.field-group { margin-bottom: 14px; }
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.field-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-white);
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.field-input:focus { border-color: var(--ib-primary); }
+.field-select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-white);
+  font-family: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── 빈 상태 ── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-light);
+}
+.empty-icon  { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.empty-title { font-size: 15px; font-weight: 500; margin: 0 0 0.4rem; }
+.empty-desc  { font-size: 13px; margin: 0; color: var(--color-text-muted); }
+</style>
+
+<script>
+/* youtube.html 인라인 스크립트는 innerHTML 삽입 시 실행되지 않습니다.
+   전역 함수(startYoutubeAnalysis 등)는 js/youtube.js 에서 정의됩니다.
+   아래 코드는 참고용으로만 남겨두고 실제로는 실행되지 않습니다. */
+(function () {
+  if (true) return; // 실행 차단 — js/youtube.js 참조
+  const _t  = (key, fb) => window.t ? window.t(key) : fb;
+  const KEYS = window.Storage?.KEYS;
+
+  /* ── 탭 전환 ── */
+  window.togglePromptBox = function togglePromptBox() {
+    const box  = document.getElementById('yt-prompt-box');
+    const icon = document.getElementById('prompt-toggle-icon');
+    if (!box) return;
+    const isOpen = box.style.display !== 'none';
+    box.style.display = isOpen ? 'none' : 'block';
+    if (icon) icon.textContent = isOpen ? '▶' : '▼';
+  };
+
+  window.switchYoutubeTab = function switchYoutubeTab(tab) {
+    document.querySelectorAll('.yt-tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.tab === tab)
+    );
+    document.querySelectorAll('.yt-panel').forEach(p => {
+      p.style.display = p.id === `tab-${tab}` ? 'block' : 'none';
+    });
+  };
+
+  /* ════════════════════════════════════════
+     썸네일 제작
+     ════════════════════════════════════════ */
+  window.generateYoutubeThumbnail = async function generateYoutubeThumbnail() {
+    const btn        = document.getElementById('btn-gen-thumbnail');
+    const previewEl  = document.getElementById('yt-thumb-preview');
+    const actionsEl  = document.getElementById('yt-thumb-actions');
+    const promptEl   = document.getElementById('yt-prompt-result');
+    const promptText = document.getElementById('yt-prompt-text');
+
+    const videoTitle = document.getElementById('yt-video-title')?.value?.trim() || '';
+    const topic      = document.getElementById('yt-video-topic')?.value?.trim()  || '';
+    const mainText   = document.getElementById('yt-main-text')?.value?.trim()    || '';
+    const subText    = document.getElementById('yt-sub-text')?.value?.trim()     || '';
+    const style      = document.getElementById('yt-thumb-style')?.value          || 'clean';
+
+    if (!videoTitle && !topic) {
+      window.showToast(_t('toast.needKeyMsg', '영상 제목 또는 주제를 입력해주세요.'), 'warning');
+      return;
+    }
+
+    // 로딩
+    if (btn) { btn.disabled = true; btn.textContent = _t('create.generating', '생성 중...'); }
+    previewEl.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:2rem;">
+        <div class="spinner"></div>
+        <p style="font-size:12px;color:var(--color-text-light);">
+          ${_t('create.imageWaiting', '이미지 생성 중... (30~60초 소요)')}
+        </p>
+      </div>`;
+
+    try {
+      // 1. 프롬프트 생성
+      const promptResp = await fetch('/api/youtube/thumbnail-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoTitle, topic, mainText, subText, style }),
+      });
+      const promptData = await promptResp.json();
+      if (!promptData.success) throw new Error(promptData.error || 'Prompt generation failed');
+
+      // 2. 이미지 생성
+      const imgResp = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imagePrompt:    promptData.imagePrompt,
+          negativePrompt: promptData.negativePrompt || '',
+          sizePreset:     '16:9',
+        }),
+      });
+      const imgData = await imgResp.json();
+      if (!imgData.success) throw new Error(imgData.error || 'Image generation failed');
+
+      // 결과 표시
+      previewEl.innerHTML = `
+        <img src="${imgData.imageUrl}" alt="thumbnail"
+             style="width:100%;height:100%;object-fit:cover;">`;
+      if (actionsEl) actionsEl.style.display = 'flex';
+      if (promptEl)  {
+        promptEl.style.display = 'block';
+        // reset collapse state
+        const box  = document.getElementById('yt-prompt-box');
+        const icon = document.getElementById('prompt-toggle-icon');
+        if (box)  box.style.display = 'none';
+        if (icon) icon.textContent  = '▶';
+      }
+      if (promptText) promptText.value = promptData.imagePrompt;
+
+      // 임시 저장
+      window._ytThumbnailData = { imageUrl: imgData.imageUrl, imagePrompt: promptData.imagePrompt, videoTitle, topic, mainText };
+
+      window.showToast(_t('toast.imageGenDone', '썸네일이 생성되었습니다 ✅'), 'success');
+
+    } catch (err) {
+      previewEl.innerHTML = `
+        <div class="yt-thumb-empty">
+          <span style="font-size:1.5rem;">⚠️</span>
+          <p style="color:var(--ib-primary);font-size:12px;">${err.message}</p>
+        </div>`;
+      window.showToast(`${_t('toast.imageGenFail', '이미지 생성 실패')}: ${err.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = _t('youtube.generateThumbnail', '썸네일 생성');
+      }
+    }
+  };
+
+  window.downloadThumbnail = function downloadThumbnail() {
+    const d = window._ytThumbnailData;
+    if (!d?.imageUrl) return;
+    const a = document.createElement('a');
+    a.href     = d.imageUrl;
+    a.download = `inbody-thumbnail-${Date.now()}.png`;
+    a.click();
+    window.showToast(_t('toast.downloadStart', '다운로드를 시작합니다.'), 'success');
+  };
+
+  window.saveThumbnailAsAsset = function saveThumbnailAsAsset() {
+    const d = window._ytThumbnailData;
+    if (!d?.imageUrl) return;
+    window.Storage.addItem(window.Storage.KEYS.ASSETS, {
+      text:         d.videoTitle || d.mainText || 'YouTube Thumbnail',
+      category:     'youtube',
+      country:      'KR',
+      channel:      'youtube-thumbnail',
+      imageUrl:     d.imageUrl,
+      copyHeadline: d.mainText   || '',
+      copySubtext:  d.topic      || '',
+    });
+    window.updateBadges?.();
+    window.showToast(_t('toast.assetSaved', '에셋이 저장되었습니다!'), 'success');
+  };
+
+  window.copyYoutubePrompt = function copyYoutubePrompt() {
+    const text = document.getElementById('yt-prompt-text')?.value;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      window.showToast(_t('toast.copied', '클립보드에 복사되었습니다 ✅'), 'success');
+    });
+  };
+
+  /* ════════════════════════════════════════
+     영상 분석
+     ════════════════════════════════════════ */
+  window.startYoutubeAnalysis = async function startYoutubeAnalysis() {
+    const url = document.getElementById('yt-url-input')?.value?.trim();
+    if (!url) {
+      window.showToast(_t('toast.enterUrl', '유튜브 URL을 입력해주세요.'), 'warning');
+      return;
+    }
+    if (!/youtube\.com|youtu\.be/.test(url)) {
+      window.showToast(_t('toast.invalidUrl', '올바른 유튜브 URL이 아닙니다.'), 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btn-start-analysis');
+    if (btn) { btn.disabled = true; btn.textContent = _t('youtube.processingBtn', '처리 중...'); }
+
+    const resultSection = document.getElementById('analysis-result-section');
+    if (resultSection) resultSection.style.display = 'none';
+
+    const jobData = { url, text: url, status: 'processing', generatedAssets: [] };
+
+    try {
+      // 자막 추출
+      const extractRes = await _apiPost('/api/youtube/extract', { url });
+      jobData.text = extractRes.title || url;
+
+      // AI 분석
+      const analyzeRes = await _apiPost('/api/claude/analyze', {
+        transcript: extractRes.transcript || '',
+        videoTitle: extractRes.title      || url,
+      });
+
+      // 분석 결과 표시
+      _renderAnalysisResult(analyzeRes, extractRes.title || url);
+
+      // 히스토리 저장
+      jobData.status  = 'done';
+      jobData.summary = analyzeRes.summary || '';
+      if (KEYS) window.Storage.addItem(KEYS.YOUTUBE_JOBS, jobData);
+      window.updateBadges?.();
+      _renderHistory();
+
+      window.showToast(_t('youtube.allDone', '분석이 완료되었습니다! 🎉'), 'success');
+
+    } catch (err) {
+      jobData.status = 'error';
+      if (KEYS) window.Storage.addItem(KEYS.YOUTUBE_JOBS, jobData);
+      _renderHistory();
+      window.showToast(`${_t('youtube.processingError', '처리 중 오류')}: ${err.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled    = false;
+        btn.textContent = _t('youtube.startAnalysis', '▶ 영상 분석 시작');
+      }
+    }
+  };
+
+  function _renderAnalysisResult(analysis, videoTitle) {
+    const section = document.getElementById('analysis-result-section');
+    if (!section) return;
+
+    // 요약
+    const summaryEl = document.getElementById('analysis-summary');
+    if (summaryEl) summaryEl.textContent = analysis.summary || '-';
+
+    // 핵심 포인트
+    const kpEl = document.getElementById('analysis-keypoints');
+    if (kpEl) {
+      const points = analysis.keyPoints || analysis.shortsTimestamps?.map(t => t.description) || [];
+      kpEl.innerHTML = points.length
+        ? points.map(p => `<li>${p}</li>`).join('')
+        : `<li style="color:var(--color-text-light)">-</li>`;
+    }
+
+    // 마케팅 프롬프트 3종
+    const cardsEl = document.getElementById('prompt-cards');
+    if (cardsEl) {
+      const prompts = [
+        { icon: '📱', labelKey: 'youtube.promptForSNS',       label: 'SNS 카피 프롬프트',    text: analysis.snsPrompt       || analysis.snsPromptText       || '' },
+        { icon: '🎬', labelKey: 'youtube.promptForThumbnail', label: '썸네일 제작 프롬프트',  text: analysis.thumbnailPrompt || analysis.thumbnailPromptText || '' },
+        { icon: '💼', labelKey: 'youtube.promptForB2B',       label: 'B2B 제안서 프롬프트',   text: analysis.b2bPrompt       || analysis.b2bPromptText       || '' },
+      ];
+
+      cardsEl.innerHTML = prompts.map(p => `
+        <div class="prompt-card">
+          <div class="prompt-card-head">
+            <span class="prompt-card-label">${p.icon} ${_t(p.labelKey, p.label)}</span>
+            <button class="btn-use-prompt"
+                    onclick="useAnalysisPrompt(this)"
+                    data-prompt="${(p.text || '').replace(/"/g, '&quot;')}">
+              ${_t('youtube.usePrompt', '이 프롬프트 사용')}
+            </button>
+          </div>
+          <p class="prompt-card-text">${p.text || '-'}</p>
+        </div>`
+      ).join('');
+    }
+
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  window.useAnalysisPrompt = function useAnalysisPrompt(btn) {
+    const text = btn.dataset.prompt;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      window.showToast(_t('toast.copied', '클립보드에 복사되었습니다 ✅'), 'success');
+    });
+  };
+
+  /* ── 히스토리 렌더 ── */
+  function _renderHistory() {
+    if (!KEYS) return;
+    const jobs    = window.Storage.getData(KEYS.YOUTUBE_JOBS);
+    const listEl  = document.getElementById('history-list');
+    const countEl = document.getElementById('history-count');
+    if (countEl) countEl.textContent = jobs.length;
+    if (!listEl) return;
+
+    if (!jobs.length) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🎬</div>
+          <p class="empty-title" data-i18n="youtube.noHistory">처리된 영상이 없습니다.</p>
+          <p class="empty-desc" data-i18n="youtube.noHistoryDesc">
+            유튜브 URL을 입력하면 자동으로 처리 내역이 쌓입니다.
+          </p>
+        </div>`;
+      window.applyLang?.(window.getCurrentLang?.() || 'ko');
+      return;
+    }
+
+    const statusCls = s => ({ done:'status-done', processing:'status-processing', error:'status-error', pending:'status-pending' }[s] || '');
+    const statusLbl = s => ({ done: _t('youtube.statusDone','완료'), processing: _t('youtube.statusProcessing','처리 중'), error: _t('youtube.statusError','오류'), pending: _t('youtube.statusPending','대기') }[s] || s);
+    const loc       = window.getCurrentLang?.() === 'en' ? 'en-AU' : 'ko-KR';
+
+    listEl.innerHTML = [...jobs].reverse().map(j => `
+      <div class="history-row">
+        <div class="history-row-main">
+          <div class="history-row-title">
+            <a href="${j.url || '#'}" target="_blank" rel="noopener"
+               style="color:var(--ib-primary);text-decoration:underline;font-size:13px;">
+              ${j.text || j.url || '-'}
+            </a>
+          </div>
+          <div class="history-row-meta">
+            <span class="status-badge ${statusCls(j.status)}">${statusLbl(j.status)}</span>
+            <span style="font-size:11px;color:var(--color-text-muted);">
+              ${new Date(j.createdAt).toLocaleDateString(loc, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}
+            </span>
+          </div>
+        </div>
+        <button class="btn-del-job btn btn-sm btn-danger"
+                data-id="${j.id}" title="${_t('youtube.btnDelete','삭제')}">🗑️</button>
+      </div>`
+    ).join('');
+  }
+
+  document.getElementById('history-list')?.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-del-job');
+    if (!btn || !KEYS) return;
+    if (!confirm(_t('youtube.deleteConfirm', '이 처리 내역을 삭제하시겠습니까?'))) return;
+    window.Storage.deleteItem(KEYS.YOUTUBE_JOBS, btn.dataset.id);
+    _renderHistory();
+    window.updateBadges?.();
+    window.showToast(_t('toast.deleted', '삭제되었습니다.'), 'success');
+  });
+
+  async function _apiPost(endpoint, body) {
+    const res  = await fetch(endpoint, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `API 오류 ${res.status}`);
+    return data;
+  }
+
+  /* ── 언어 전환 훅 ── */
+  window.currentPageRender = _renderHistory;
+
+  /* ── 초기 렌더 ── */
+  _renderHistory();
+})();
+</script>
+
+<!-- 히스토리 행 스타일 -->
+<style>
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--color-border);
+}
+.history-row:last-child { border-bottom: none; }
+.history-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+}
+.history-row-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.history-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.status-done       { background: #eaf3de; color: #3B6D11; }
+.status-processing { background: #faeeda; color: #854F0B; }
+.status-error      { background: #fde8e8; color: #A32D2D; }
+.status-pending    { background: #f1f1f1; color: #888888; }
+</style>

@@ -1,0 +1,501 @@
+<!-- =====================================================
+     pages/library.html — 프롬프트 라이브러리
+     ===================================================== -->
+
+<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);">
+  <div>
+    <h1 data-i18n="library.title">프롬프트 라이브러리</h1>
+    <p><span data-i18n="library.subtitle">이미지 생성 프롬프트를 저장·관리합니다.</span> <strong id="prompts-count">0개</strong></p>
+  </div>
+  <div style="display:flex;gap:var(--space-2);">
+    <button id="btn-export-csv"
+            data-i18n="library.exportCsv"
+            style="all:unset;height:36px;padding:0 16px;border:0.5px solid var(--color-border);border-radius:var(--radius);font-size:13px;font-weight:500;color:var(--color-text);cursor:pointer;background:#fff;display:flex;align-items:center;box-sizing:border-box;font-family:inherit;">
+      CSV 내보내기
+    </button>
+  </div>
+</div>
+
+<!-- ── 필터/정렬 바 ── -->
+<div class="filter-bar" style="flex-wrap:wrap;gap:var(--space-3);">
+  <div class="search-input-wrapper" style="flex:2;min-width:180px;">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="form-input" id="lib-search"
+      data-i18n-placeholder="library.searchPlaceholder"
+      placeholder="프롬프트, 태그 검색..." />
+  </div>
+
+  <select class="filter-select" id="lib-filter-category">
+    <option value="" data-i18n="library.allCategories">전체 카테고리</option>
+    <option value="sns">SNS</option>
+    <option value="b2b">B2B</option>
+    <option value="event" data-i18n="assets.tab_event">Event</option>
+    <option value="youtube">YouTube</option>
+    <option value="shorts">Shorts</option>
+  </select>
+
+  <select class="filter-select" id="lib-filter-country">
+    <option value="" data-i18n="library.allCountries">전체 국가</option>
+    <option value="AU" data-i18n="common.country_au">호주</option>
+    <option value="UK" data-i18n="common.country_uk">영국</option>
+  </select>
+
+  <select class="filter-select" id="lib-filter-rating">
+    <option value="" data-i18n="library.allRatings">전체 별점</option>
+    <option value="5" data-i18n="library.rating5">⭐⭐⭐⭐⭐ 5점</option>
+    <option value="4" data-i18n="library.rating4">⭐⭐⭐⭐ 4점+</option>
+    <option value="3" data-i18n="library.rating3">⭐⭐⭐ 3점+</option>
+  </select>
+
+  <select class="filter-select" id="lib-sort">
+    <option value="newest" data-i18n="library.sortNewest">최신순</option>
+    <option value="useCount" data-i18n="library.sortUseCount">많이 사용된 순</option>
+    <option value="rating" data-i18n="library.sortRating">높은 평점 순</option>
+  </select>
+</div>
+
+<!-- ── 프롬프트 테이블 ── -->
+<div class="card" style="overflow:hidden;">
+  <div style="overflow-x:auto;">
+    <table class="prompts-table" id="prompts-table">
+      <thead>
+        <tr>
+          <th data-i18n="library.colCategory">카테고리</th>
+          <th data-i18n="library.colCountry">국가</th>
+          <th data-i18n="library.colPrompt">프롬프트 요약</th>
+          <th data-i18n="library.colTags">태그</th>
+          <th data-i18n="library.colRating">별점</th>
+          <th data-i18n="library.colUses">사용</th>
+          <th data-i18n="library.colDate">날짜</th>
+          <th data-i18n="library.colActions" style="min-width:160px;">액션</th>
+        </tr>
+      </thead>
+      <tbody id="prompts-tbody">
+        <!-- JS 렌더 -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── 빈 상태 ── -->
+<div class="empty-state hidden" id="lib-empty">
+  <span class="empty-icon">📚</span>
+  <p data-i18n="library.noPrompts">저장된 프롬프트가 없습니다.</p>
+  <p class="text-muted" data-i18n="library.noPromptsHint">에셋 생성 마법사에서 프롬프트를 저장하거나 직접 추가하세요.</p>
+</div>
+
+<!-- ══ 프롬프트 상세/편집 모달 ══ -->
+<div class="modal-overlay hidden" id="prompt-modal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <h2 class="modal-title" data-i18n="library.editTitle">프롬프트 상세 / 편집</h2>
+      <button class="modal-close" id="prompt-modal-close">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:var(--space-5);">
+      <div id="pm-meta" style="display:flex;gap:var(--space-2);flex-wrap:wrap;"></div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.imgPromptLabel">이미지 프롬프트</label>
+        <textarea class="form-input" id="pm-text" rows="5"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.negPromptLabel">네거티브 프롬프트</label>
+        <textarea class="form-input" id="pm-negative" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.rationaleLabel">한국어 설명 (rationale)</label>
+        <textarea class="form-input" id="pm-rationale" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.ratingLabel">별점</label>
+        <div class="star-rating" id="pm-stars" style="font-size:1.8rem;gap:4px;">
+          <span class="star" data-val="1">★</span>
+          <span class="star" data-val="2">★</span>
+          <span class="star" data-val="3">★</span>
+          <span class="star" data-val="4">★</span>
+          <span class="star" data-val="5">★</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.tagsLabel">태그</label>
+        <div id="pm-tags-container" style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-2);"></div>
+        <div style="display:flex;gap:var(--space-2);">
+          <input type="text" class="form-input" id="pm-tag-input"
+            data-i18n-placeholder="library.tagPlaceholder"
+            placeholder="태그 입력 후 Enter..." style="max-width:220px;" />
+          <button class="btn btn-outline btn-sm" id="pm-tag-add" data-i18n="library.addTag">추가</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="pm-cancel" data-i18n="library.cancelBtn">취소</button>
+      <button class="btn btn-primary" id="pm-save" data-i18n="library.saveBtn">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 프롬프트 직접 추가 모달 ══ -->
+<div class="modal-overlay hidden" id="add-prompt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" data-i18n="library.addModalTitle">프롬프트 직접 추가</h2>
+      <button class="modal-close" id="add-modal-close">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:var(--space-4);">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" data-i18n="library.categoryLabel">카테고리</label>
+          <select class="form-input" id="add-category">
+            <option value="sns">SNS</option>
+            <option value="b2b">B2B</option>
+            <option value="event">Event</option>
+            <option value="youtube">YouTube</option>
+            <option value="shorts">Shorts</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="library.countryLabel">국가</label>
+          <select class="form-input" id="add-country">
+            <option value="AU" data-i18n="common.country_au">호주</option>
+            <option value="UK" data-i18n="common.country_uk">영국</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.promptLabel">이미지 프롬프트 <span class="required">*</span></label>
+        <textarea class="form-input" id="add-text" rows="4" placeholder="프롬프트 전문을 입력하세요..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.negLabel">네거티브 프롬프트</label>
+        <textarea class="form-input" id="add-negative" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="library.tagsInputLabel">태그 (쉼표 구분)</label>
+        <input type="text" class="form-input" id="add-tags" placeholder="예: fitness, outdoor, professional" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="add-modal-cancel" data-i18n="library.cancelBtn">취소</button>
+      <button class="btn btn-primary" id="add-modal-save" data-i18n="library.saveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 테이블 스타일 ══ -->
+<style>
+.prompts-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); }
+.prompts-table th {
+  background:var(--color-bg); padding:var(--space-3) var(--space-4);
+  text-align:left; font-weight:700; font-size:11px; text-transform:uppercase;
+  color:var(--color-text-light); border-bottom:2px solid var(--color-border);
+  white-space:nowrap;
+}
+.prompts-table td {
+  padding:var(--space-3) var(--space-4);
+  border-bottom:1px solid var(--color-border-light);
+  vertical-align:middle;
+}
+.prompts-table tr:hover td { background:var(--color-bg); cursor:pointer; }
+.prompts-table tr:last-child td { border-bottom:none; }
+.tag-pill {
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--color-bg); border:1px solid var(--color-border);
+  border-radius:var(--radius-full); padding:1px 8px; font-size:11px;
+}
+.tag-pill .remove-tag { cursor:pointer; color:var(--color-text-muted); }
+.tag-pill .remove-tag:hover { color:var(--color-error); }
+</style>
+
+<script>
+(function () {
+  let _editId   = null;
+  let _editRating = 0;
+  let _editTags   = [];
+
+  const KEYS = window.Storage.KEYS;
+  const _t = (key, fallback) => window.t ? t(key) : fallback;
+
+  /* ── 날짜 포맷 ── */
+  const fmtDate = iso => {
+    if (!iso) return '-';
+    const loc = window.getCurrentLang?.() === 'en' ? 'en-AU' : 'ko-KR';
+    return new Date(iso).toLocaleDateString(loc, { month:'short', day:'numeric' });
+  };
+
+  /* ── 별점 HTML ── */
+  const starsHtml = n =>
+    [1,2,3,4,5].map(i => `<span style="color:${i<=n?'#F4A261':'#ddd'};">★</span>`).join('');
+
+  /* ── 국가 표시 ── */
+  const countryLabel = code =>
+    code === 'AU' ? _t('common.country_au', 'AU')
+    : code === 'UK' ? _t('common.country_uk', 'UK')
+    : (code || '-');
+
+  /* ── 렌더 ── */
+  function renderTable() {
+    const search   = document.getElementById('lib-search')?.value.toLowerCase() || '';
+    const catF     = document.getElementById('lib-filter-category')?.value || '';
+    const countryF = document.getElementById('lib-filter-country')?.value || '';
+    const ratingF  = parseInt(document.getElementById('lib-filter-rating')?.value) || 0;
+    const sort     = document.getElementById('lib-sort')?.value || 'newest';
+
+    let data = window.Storage.getData(KEYS.PROMPTS);
+
+    data = data.filter(p => {
+      if (catF     && p.category !== catF)     return false;
+      if (countryF && p.country  !== countryF) return false;
+      if (ratingF  && (p.rating  || 0) < ratingF) return false;
+      if (search) {
+        const hay = [p.text, ...(p.tags||[])].join(' ').toLowerCase();
+        if (!hay.includes(search)) return false;
+      }
+      return true;
+    });
+
+    if (sort === 'useCount') data.sort((a,b) => (b.useCount||0)-(a.useCount||0));
+    else if (sort === 'rating') data.sort((a,b) => (b.rating||0)-(a.rating||0));
+    else data.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt));
+
+    const tbody = document.getElementById('prompts-tbody');
+    const empty = document.getElementById('lib-empty');
+    const count = document.getElementById('prompts-count');
+    if (!tbody) return;
+
+    if (count) count.textContent = `${data.length}${_t('common.items','개')}`;
+
+    if (!data.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="padding:3rem 0;text-align:center;">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <p class="empty-title" data-i18n="library.noPrompts">
+                ${_t('library.noPrompts', '저장된 프롬프트가 없습니다.')}
+              </p>
+              <p style="font-size:12px;color:var(--color-text-muted);margin-top:4px;">
+                ${_t('library.noPromptsDesc', '에셋을 생성하면 프롬프트가 자동으로 저장됩니다.')}
+              </p>
+              <a href="javascript:void(0)" onclick="window.navigateTo?.('create')"
+                 style="margin-top:12px;display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);font-size:13px;text-decoration:none;cursor:pointer;">
+                ${_t('nav.create', '에셋 생성')}
+              </a>
+            </div>
+          </td>
+        </tr>`;
+      window.applyLang?.(window.getCurrentLang?.() || 'ko');
+      return;
+    }
+    empty?.classList.add('hidden');
+
+    tbody.innerHTML = data.map(p => {
+      const tags = (p.tags||[]).map(t=>`<span class="badge badge-outline" style="font-size:10px;">${t}</span>`).join(' ');
+      const summary = (p.text||'').substring(0,50) + ((p.text||'').length>50?'…':'');
+      const copyLabel = _t('library.copyBtn', '📋');
+      const delLabel  = _t('library.deleteBtn', '🗑️');
+      const useLabel  = _t('library.useWizard', '🪄');
+      return `
+        <tr data-id="${p.id}">
+          <td><span class="badge badge-primary">${(p.category||'-').toUpperCase()}</span></td>
+          <td>${countryLabel(p.country)}</td>
+          <td style="max-width:220px;" title="${(p.text||'').replace(/"/g,'&quot;')}">${summary}</td>
+          <td>${tags||'<span style="color:var(--color-text-muted);">-</span>'}</td>
+          <td style="white-space:nowrap;">${starsHtml(p.rating||0)}</td>
+          <td style="text-align:center;font-weight:700;">${p.useCount||0}</td>
+          <td style="white-space:nowrap;">${fmtDate(p.createdAt)}</td>
+          <td>
+            <div style="display:flex;gap:var(--space-1);">
+              <button class="btn btn-sm btn-outline btn-copy" data-id="${p.id}" title="${_t('common.copy','복사')}">${copyLabel}</button>
+              <button class="btn btn-sm btn-secondary btn-use"  data-id="${p.id}" title="${_t('library.useWizard','마법사에서 사용')}">${useLabel}</button>
+              <button class="btn btn-sm btn-danger btn-del"    data-id="${p.id}" title="${_t('common.delete','삭제')}">${delLabel}</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ── 테이블 클릭 ── */
+  document.getElementById('prompts-table')?.addEventListener('click', e => {
+    const copyB  = e.target.closest('.btn-copy');
+    const useB   = e.target.closest('.btn-use');
+    const delB   = e.target.closest('.btn-del');
+    const row    = e.target.closest('tr[data-id]');
+
+    if (copyB) { copyPrompt(copyB.dataset.id); return; }
+    if (useB)  { useInWizard(useB.dataset.id); return; }
+    if (delB)  { deletePrompt(delB.dataset.id); return; }
+    if (row)   { openEditModal(row.dataset.id); }
+  });
+
+  function copyPrompt(id) {
+    const p = window.Storage.getData(KEYS.PROMPTS).find(x=>x.id===id);
+    if (!p) return;
+    navigator.clipboard.writeText(p.text).then(() => {
+      window.Storage.updateItem(KEYS.PROMPTS, id, { useCount: (p.useCount||0)+1 });
+      window.showToast(_t('toast.copied', '클립보드에 복사되었습니다!'), 'success');
+      renderTable();
+    }).catch(() => window.showToast(_t('toast.copyFail', '복사 실패. 브라우저 권한을 확인하세요.'), 'error'));
+  }
+
+  function useInWizard(id) {
+    const p = window.Storage.getData(KEYS.PROMPTS).find(x=>x.id===id);
+    if (!p) return;
+    sessionStorage.setItem('wizardPrompt', JSON.stringify(p));
+    window.Storage.updateItem(KEYS.PROMPTS, id, { useCount: (p.useCount||0)+1 });
+    window.showToast(_t('toast.goingToWizard', '마법사로 이동합니다...'), 'info');
+    setTimeout(() => window.navigateTo?.('create'), 600);
+  }
+
+  function deletePrompt(id) {
+    if (!confirm(_t('library.deleteConfirm','이 프롬프트를 삭제하시겠습니까?'))) return;
+    window.Storage.deleteItem(KEYS.PROMPTS, id);
+    renderTable();
+    window.showToast(_t('toast.deleted', '삭제되었습니다.'), 'success');
+    window.updateBadges?.();
+  }
+
+  /* ── 편집 모달 ── */
+  function openEditModal(id) {
+    const p = window.Storage.getData(KEYS.PROMPTS).find(x=>x.id===id);
+    if (!p) return;
+    _editId     = id;
+    _editRating = p.rating || 0;
+    _editTags   = [...(p.tags||[])];
+
+    document.getElementById('pm-meta').innerHTML = [
+      `<span class="badge badge-primary">${(p.category||'-').toUpperCase()}</span>`,
+      `<span class="badge badge-secondary">${countryLabel(p.country)}</span>`,
+    ].join('');
+    document.getElementById('pm-text').value      = p.text           || '';
+    document.getElementById('pm-negative').value  = p.negativePrompt || '';
+    document.getElementById('pm-rationale').value = p.rationale      || '';
+    updateStarDisplay();
+    renderTagPills();
+    document.getElementById('prompt-modal').classList.remove('hidden');
+  }
+
+  function updateStarDisplay() {
+    document.querySelectorAll('#pm-stars .star').forEach(s => {
+      s.classList.toggle('filled', parseInt(s.dataset.val) <= _editRating);
+      s.style.color = parseInt(s.dataset.val) <= _editRating ? '#F4A261' : '#ddd';
+    });
+  }
+
+  function renderTagPills() {
+    const c = document.getElementById('pm-tags-container');
+    if (!c) return;
+    c.innerHTML = _editTags.map((tg,i) =>
+      `<span class="tag-pill">${tg}<span class="remove-tag" data-i="${i}">×</span></span>`
+    ).join('');
+    c.querySelectorAll('.remove-tag').forEach(x =>
+      x.addEventListener('click', () => { _editTags.splice(parseInt(x.dataset.i),1); renderTagPills(); })
+    );
+  }
+
+  document.getElementById('pm-stars')?.addEventListener('click', e => {
+    const s = e.target.closest('.star');
+    if (!s) return;
+    _editRating = parseInt(s.dataset.val);
+    updateStarDisplay();
+  });
+
+  function addTag() {
+    const inp = document.getElementById('pm-tag-input');
+    const val = inp?.value.trim();
+    if (val && !_editTags.includes(val)) { _editTags.push(val); renderTagPills(); }
+    if (inp) inp.value = '';
+  }
+  document.getElementById('pm-tag-input')?.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();addTag();} });
+  document.getElementById('pm-tag-add')?.addEventListener('click', addTag);
+
+  document.getElementById('pm-save')?.addEventListener('click', () => {
+    if (!_editId) return;
+    window.Storage.updateItem(KEYS.PROMPTS, _editId, {
+      text:           document.getElementById('pm-text').value,
+      negativePrompt: document.getElementById('pm-negative').value,
+      rationale:      document.getElementById('pm-rationale').value,
+      rating:         _editRating,
+      tags:           _editTags,
+    });
+    closeEditModal();
+    renderTable();
+    window.showToast(_t('toast.saved', '저장되었습니다!'), 'success');
+  });
+
+  const closeEditModal = () => { document.getElementById('prompt-modal')?.classList.add('hidden'); _editId=null; };
+  document.getElementById('prompt-modal-close')?.addEventListener('click', closeEditModal);
+  document.getElementById('pm-cancel')?.addEventListener('click', closeEditModal);
+  document.getElementById('prompt-modal')?.addEventListener('click', e => { if(e.target.id==='prompt-modal') closeEditModal(); });
+
+  /* ── 직접 추가 모달 ── */
+  document.getElementById('btn-add-prompt')?.addEventListener('click', () =>
+    document.getElementById('add-prompt-modal')?.classList.remove('hidden')
+  );
+
+  const closeAddModal = () => document.getElementById('add-prompt-modal')?.classList.add('hidden');
+  document.getElementById('add-modal-close')?.addEventListener('click', closeAddModal);
+  document.getElementById('add-modal-cancel')?.addEventListener('click', closeAddModal);
+  document.getElementById('add-prompt-modal')?.addEventListener('click', e => { if(e.target.id==='add-prompt-modal') closeAddModal(); });
+
+  document.getElementById('add-modal-save')?.addEventListener('click', () => {
+    const text = document.getElementById('add-text')?.value.trim();
+    if (!text) { window.showToast(_t('toast.enterPrompt', '프롬프트를 입력해주세요.'), 'warning'); return; }
+    const tagsRaw = document.getElementById('add-tags')?.value || '';
+    window.Storage.addItem(KEYS.PROMPTS, {
+      text,
+      negativePrompt: document.getElementById('add-negative')?.value || '',
+      category:       document.getElementById('add-category')?.value || 'sns',
+      country:        document.getElementById('add-country')?.value  || 'AU',
+      tags:    tagsRaw.split(',').map(tg=>tg.trim()).filter(Boolean),
+      rating:  0,
+      useCount: 0,
+    });
+    closeAddModal();
+    renderTable();
+    window.updateBadges?.();
+    window.showToast(_t('toast.promptSaved', '프롬프트가 저장되었습니다!'), 'success');
+    document.getElementById('add-text').value     = '';
+    document.getElementById('add-negative').value = '';
+    document.getElementById('add-tags').value     = '';
+  });
+
+  /* ── CSV 내보내기 ── */
+  document.getElementById('btn-export-csv')?.addEventListener('click', () => {
+    const data = window.Storage.getData(KEYS.PROMPTS);
+    if (!data.length) { window.showToast(_t('toast.noExportData', '내보낼 데이터가 없습니다.'), 'warning'); return; }
+
+    const esc  = v => `"${String(v||'').replace(/"/g,'""')}"`;
+    const cols = ['id','category','country','text','negativePrompt','tags','rating','useCount','createdAt'];
+    const rows = [
+      cols.join(','),
+      ...data.map(p => cols.map(c => {
+        const v = c==='tags' ? (p.tags||[]).join('|') : p[c];
+        return esc(v);
+      }).join(','))
+    ];
+    const blob = new Blob(['\uFEFF' + rows.join('\r\n')], { type:'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `inbody-prompts-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    window.showToast(_t('toast.csvDone', 'CSV 내보내기 완료!'), 'success');
+  });
+
+  /* ── 필터/정렬 이벤트 ── */
+  ['lib-search','lib-filter-category','lib-filter-country','lib-filter-rating','lib-sort']
+    .forEach(id => document.getElementById(id)?.addEventListener(
+      id==='lib-search' ? 'input' : 'change', renderTable
+    ));
+
+  /* ── 언어 전환 시 재렌더 훅 ── */
+  window.currentPageRender = renderTable;
+
+  renderTable();
+})();
+</script>

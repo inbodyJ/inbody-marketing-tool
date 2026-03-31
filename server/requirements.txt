@@ -1,0 +1,12 @@
+flask
+flask-cors
+anthropic
+openai
+google-generativeai
+yt-dlp
+ffmpeg-python
+python-dotenv
+requests
+python-pptx
+pymupdf
+Pillow

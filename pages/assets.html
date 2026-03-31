@@ -1,0 +1,573 @@
+<!-- =====================================================
+     pages/assets.html — 에셋 라이브러리
+     ===================================================== -->
+
+<!-- ── 페이지 헤더 ── -->
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-5);">
+  <div>
+    <h1 style="font-size:var(--text-2xl);font-weight:700;color:var(--color-secondary);margin-bottom:2px;" data-i18n="assets.title">에셋 라이브러리</h1>
+    <p style="color:var(--color-text-light);font-size:var(--text-sm);">
+      <span data-i18n="assets.subtitle">생성된 마케팅 에셋을 관리합니다.</span>
+      &nbsp;<strong id="assets-count" style="color:var(--color-secondary);">0개</strong>
+    </p>
+  </div>
+  <button class="btn btn-primary" onclick="navigateTo('create')">
+    <span data-i18n="assets.newAsset">+ 새 에셋 만들기</span>
+  </button>
+</div>
+
+<!-- ── 필터 바 ── -->
+<div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4);">
+
+  <!-- 국가 칩 -->
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <label class="filter-label" data-i18n="assets.filterCountry">국가</label>
+    <div class="chip-group" id="filter-country">
+      <button class="chip active" data-value="" data-i18n="common.country_all">전체</button>
+      <button class="chip" data-value="KR" data-i18n="common.country_kr">한국</button>
+      <button class="chip" data-value="AU" data-i18n="common.country_au">호주</button>
+      <button class="chip" data-value="UK" data-i18n="common.country_uk">영국</button>
+    </div>
+  </div>
+
+  <!-- 날짜 범위 -->
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <label class="filter-label" data-i18n="assets.filterPeriod">기간</label>
+    <div style="display:flex;gap:var(--space-2);align-items:center;">
+      <input type="date" class="filter-select" id="filter-date-from" style="width:130px;" />
+      <span style="color:var(--color-text-muted);font-size:var(--text-xs);">~</span>
+      <input type="date" class="filter-select" id="filter-date-to" style="width:130px;" />
+    </div>
+  </div>
+
+  <!-- 키워드 검색 -->
+  <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px;">
+    <label class="filter-label" data-i18n="assets.filterKeyword">키워드</label>
+    <div class="search-input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="form-input" id="filter-keyword"
+        data-i18n-placeholder="assets.keywordPlaceholder"
+        placeholder="헤드라인, 카피 검색..." />
+    </div>
+  </div>
+
+  <!-- 초기화 -->
+  <button class="btn btn-ghost btn-sm" id="btn-reset-filters"
+    data-i18n="assets.filterReset"
+    style="align-self:flex-end;margin-bottom:1px;">초기화</button>
+</div>
+
+<!-- ── 카테고리 탭 바 ── -->
+<div class="asset-tabs">
+  <button class="asset-tab active" data-category="all">
+    <span data-i18n="common.all">전체</span>
+    <span class="tab-count" id="count-all">0</span>
+  </button>
+  <button class="asset-tab" data-category="sns">
+    <span>SNS</span>
+    <span class="tab-count" id="count-sns">0</span>
+  </button>
+  <button class="asset-tab" data-category="b2b">
+    <span>B2B</span>
+    <span class="tab-count" id="count-b2b">0</span>
+  </button>
+  <button class="asset-tab" data-category="event">
+    <span data-i18n="assets.tab_event">이벤트</span>
+    <span class="tab-count" id="count-event">0</span>
+  </button>
+  <button class="asset-tab" data-category="youtube">
+    <span>YouTube</span>
+    <span class="tab-count" id="count-youtube">0</span>
+  </button>
+  <button class="asset-tab" data-category="blog">
+    <span data-i18n="assets.tab_blog">블로그</span>
+    <span class="tab-count" id="count-blog">0</span>
+  </button>
+</div>
+
+<!-- ── 에셋 그리드 ── -->
+<div id="assets-grid"></div>
+
+<!-- ── 이미지 상세 모달 ── -->
+<div class="modal-overlay hidden" id="asset-modal">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-asset-title" data-i18n="assets.detail">에셋 상세</h2>
+      <button class="modal-close" id="modal-close-btn">✕</button>
+    </div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);">
+      <div>
+        <img id="modal-asset-img" src="" alt=""
+          style="width:100%;border-radius:var(--radius-lg);aspect-ratio:1/1;object-fit:cover;background:var(--color-bg);" />
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        <div>
+          <p class="form-label" data-i18n="assets.catCountryChannel">카테고리 / 국가 / 채널</p>
+          <div id="modal-meta" class="flex gap-2" style="flex-wrap:wrap;margin-top:4px;"></div>
+        </div>
+        <div>
+          <p class="form-label" data-i18n="assets.headline">헤드라인</p>
+          <p id="modal-headline" style="font-size:var(--text-lg);font-weight:700;line-height:1.4;"></p>
+        </div>
+        <div>
+          <p class="form-label" data-i18n="assets.subCopy">서브카피</p>
+          <p id="modal-subtext" style="font-size:var(--text-sm);color:var(--color-text-light);line-height:1.6;"></p>
+        </div>
+        <div>
+          <p class="form-label" data-i18n="assets.createdAt">생성일</p>
+          <p id="modal-date" style="font-size:var(--text-xs);color:var(--color-text-muted);"></p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="modal-download-btn" data-i18n="assets.downloadImg">⬇️ 다운로드</button>
+      <button class="btn btn-danger" id="modal-delete-btn" data-i18n="assets.deleteAsset">🗑️ 삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 스타일 ══ -->
+<style>
+/* ── 탭 바 ── */
+.asset-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.asset-tabs::-webkit-scrollbar { display: none; }
+
+.asset-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-light);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-family: inherit;
+  margin-bottom: -1px;
+}
+.asset-tab:hover { color: var(--color-text); }
+.asset-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.tab-count {
+  background: var(--color-bg);
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-light);
+  transition: all 0.15s;
+}
+.asset-tab.active .tab-count {
+  background: #fde8e8;
+  color: var(--color-primary);
+}
+
+/* ── 에셋 그리드 ── */
+#assets-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1200px) {
+  #assets-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  #assets-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── 에셋 카드 ── */
+.asset-card {
+  background: var(--color-white);
+  border: 0.5px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.asset-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+}
+
+.asset-card-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.asset-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.asset-thumb-placeholder {
+  font-size: 2.5rem;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.asset-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.asset-card:hover .asset-card-overlay { opacity: 1; }
+
+.asset-card-overlay button {
+  background: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.asset-card-overlay button:hover {
+  background: #f0f0f0;
+  transform: scale(1.08);
+}
+.btn-delete-card:hover { background: #ffe5e5 !important; }
+
+.asset-card-body {
+  padding: 10px 12px 12px;
+}
+.asset-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.asset-flag { font-size: 1rem; line-height: 1; }
+.asset-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.asset-card-date {
+  font-size: 11px;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+/* ── 카테고리 배지 색상 ── */
+.badge-sns     { background: var(--ib-primary-light); color: var(--ib-primary); }
+.badge-b2b     { background: var(--ib-blue-gray-light); color: var(--ib-gray-4); }
+.badge-event   { background: #FFF3E0; color: #7A4F00; }
+.badge-youtube { background: #FF0000; color: #fff; }
+.badge-shorts  { background: #67767F; color: #fff; }
+.badge-default { background: var(--color-dark-gray); color: #fff; }
+
+/* ── 필터 레이블 ── */
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+</style>
+
+<script>
+(function () {
+  /* ── 상태 ── */
+  let _currentCategory = 'all';
+  let _currentCountry  = '';
+  let _currentKeyword  = '';
+  let _dateFrom        = '';
+  let _dateTo          = '';
+  let _currentModalId  = null;
+
+  /* ── 번역 헬퍼 ── */
+  const _t = (key, fallback) => window.t ? window.t(key) : fallback;
+
+  /* ── 날짜 포맷 ── */
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    const loc = window.getCurrentLang?.() === 'en' ? 'en-AU' : 'ko-KR';
+    return new Date(iso).toLocaleDateString(loc, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  /* ── 국가 표시 ── */
+  function countryLabel(code) {
+    if (code === 'AU') return _t('common.country_au', 'AU');
+    if (code === 'UK') return _t('common.country_uk', 'UK');
+    return code || '';
+  }
+
+  /* ── 카테고리 배지 ── */
+  function catBadge(cat) {
+    const cls = ['sns','b2b','event','youtube'].includes(cat)
+      ? `badge-${cat}` : 'badge-default';
+    return `<span class="badge ${cls}" style="font-size:10px;">${(cat || '-').toUpperCase()}</span>`;
+  }
+
+  /* ── 탭 카운트 업데이트 ── */
+  function updateTabCounts() {
+    const all = window.Storage.getData(window.Storage.KEYS.ASSETS);
+    ['all','sns','b2b','event','youtube','blog'].forEach(cat => {
+      const count = cat === 'all'
+        ? all.length
+        : all.filter(a => a.category === cat).length;
+      const el = document.getElementById(`count-${cat}`);
+      if (el) el.textContent = count;
+    });
+  }
+
+  /* ── 에셋 카드 빌드 ── */
+  function buildCard(a) {
+    const flag  = countryLabel(a.country) || '—';
+    const thumb = a.imageUrl
+      ? `<img src="${a.imageUrl}" alt="${(a.text || '').replace(/"/g,'&quot;')}" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="asset-thumb-placeholder">🎨</div>`;
+    const dlTitle  = _t('assets.downloadImg', '⬇️ 다운로드');
+    const delTitle = _t('assets.deleteAsset', '🗑️ 삭제');
+    const name     = a.copyHeadline || a.text || _t('assets.noTitle','(제목 없음)');
+
+    return `
+      <div class="asset-card" data-id="${a.id}" data-category="${a.category || ''}" data-country="${a.country || ''}">
+        <div class="asset-card-thumb" data-open="${a.id}">
+          ${thumb}
+          <div class="asset-card-overlay">
+            <button class="btn-download-card" data-id="${a.id}" title="${dlTitle}">⬇️</button>
+            <button class="btn-delete-card"   data-id="${a.id}" title="${delTitle}">🗑️</button>
+          </div>
+        </div>
+        <div class="asset-card-body" data-open="${a.id}">
+          <div class="asset-card-meta">
+            ${catBadge(a.category)}
+            <span class="asset-flag">${flag}</span>
+          </div>
+          <p class="asset-card-name" title="${name.replace(/"/g,'&quot;')}">${name}</p>
+          <p class="asset-card-date">${fmtDate(a.createdAt)}</p>
+        </div>
+      </div>`;
+  }
+
+  /* ── 그리드 렌더 ── */
+  function renderGrid(assets) {
+    const grid = document.getElementById('assets-grid');
+    if (!grid) return;
+
+    if (!assets.length) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:4rem 0;color:var(--color-text-light);">
+          <div style="font-size:2.5rem;margin-bottom:1rem;">🎨</div>
+          <p style="font-size:15px;" data-i18n="assets.noAssets">조건에 맞는 에셋이 없습니다.</p>
+        </div>`;
+      // data-i18n 재적용
+      window.applyLang?.(window.getCurrentLang?.() || 'ko');
+      return;
+    }
+    grid.innerHTML = assets.map(buildCard).join('');
+  }
+
+  /* ── 통합 필터링 + 렌더 ── */
+  function renderAssets() {
+    const all = window.Storage.getData(window.Storage.KEYS.ASSETS);
+
+    let filtered = all;
+
+    if (_currentCategory !== 'all') {
+      filtered = filtered.filter(a => a.category === _currentCategory);
+    }
+    if (_currentCountry) {
+      filtered = filtered.filter(a => a.country === _currentCountry);
+    }
+    if (_currentKeyword) {
+      const q = _currentKeyword.toLowerCase();
+      filtered = filtered.filter(a =>
+        [a.text, a.copyHeadline, a.copySubtext, a.channel]
+          .some(f => f?.toLowerCase().includes(q))
+      );
+    }
+    if (_dateFrom) {
+      filtered = filtered.filter(a => a.createdAt && a.createdAt >= _dateFrom);
+    }
+    if (_dateTo) {
+      filtered = filtered.filter(a => a.createdAt && a.createdAt <= _dateTo + 'T23:59:59');
+    }
+
+    // 탭 카운트는 항상 전체 기준
+    updateTabCounts();
+
+    // 상단 총 에셋 수 (현재 필터 결과)
+    const countEl = document.getElementById('assets-count');
+    if (countEl) countEl.textContent = `${filtered.length}${_t('assets.countSuffix','개')}`;
+
+    renderGrid(filtered);
+  }
+
+  /* ── 탭 클릭 ── */
+  document.querySelectorAll('.asset-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.asset-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      _currentCategory = tab.dataset.category;
+      renderAssets();
+    });
+  });
+
+  /* ── 국가 칩 클릭 ── */
+  document.getElementById('filter-country')?.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('#filter-country .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    _currentCountry = chip.dataset.value;
+    renderAssets();
+  });
+
+  /* ── 날짜 필터 ── */
+  document.getElementById('filter-date-from')?.addEventListener('change', e => {
+    _dateFrom = e.target.value;
+    renderAssets();
+  });
+  document.getElementById('filter-date-to')?.addEventListener('change', e => {
+    _dateTo = e.target.value;
+    renderAssets();
+  });
+
+  /* ── 키워드 검색 ── */
+  document.getElementById('filter-keyword')?.addEventListener('input', e => {
+    _currentKeyword = e.target.value.trim();
+    renderAssets();
+  });
+
+  /* ── 초기화 ── */
+  document.getElementById('btn-reset-filters')?.addEventListener('click', () => {
+    _currentCategory = 'all';
+    _currentCountry  = '';
+    _currentKeyword  = '';
+    _dateFrom        = '';
+    _dateTo          = '';
+
+    document.querySelectorAll('.asset-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+    document.querySelectorAll('#filter-country .chip').forEach((c, i) => c.classList.toggle('active', i === 0));
+    const kw = document.getElementById('filter-keyword');
+    const df = document.getElementById('filter-date-from');
+    const dt = document.getElementById('filter-date-to');
+    if (kw) kw.value = '';
+    if (df) df.value = '';
+    if (dt) dt.value = '';
+
+    renderAssets();
+  });
+
+  /* ── 그리드 이벤트 위임 ── */
+  document.getElementById('assets-grid')?.addEventListener('click', e => {
+    // 다운로드 버튼
+    const dlBtn = e.target.closest('.btn-download-card');
+    if (dlBtn) { e.stopPropagation(); downloadAsset(dlBtn.dataset.id); return; }
+
+    // 삭제 버튼
+    const delBtn = e.target.closest('.btn-delete-card');
+    if (delBtn) { e.stopPropagation(); deleteAsset(delBtn.dataset.id); return; }
+
+    // 카드 클릭 → 상세 모달
+    const openEl = e.target.closest('[data-open]');
+    if (openEl) openModal(openEl.dataset.open);
+  });
+
+  /* ── 다운로드 ── */
+  function downloadAsset(id) {
+    const asset = window.Storage.getData(window.Storage.KEYS.ASSETS).find(a => a.id === id);
+    if (!asset?.imageUrl) {
+      window.showToast(_t('toast.noImage', '이미지가 없습니다.'), 'warning');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href     = asset.imageUrl;
+    a.download = `${(asset.text || 'asset').replace(/[^\w가-힣]/g, '_')}.png`;
+    a.click();
+    window.showToast(_t('toast.downloadStart', '다운로드를 시작합니다.'), 'success');
+  }
+
+  /* ── 삭제 ── */
+  function deleteAsset(id) {
+    if (!confirm(_t('assets.deleteConfirm','이 에셋을 삭제하시겠습니까?'))) return;
+    window.Storage.deleteItem(window.Storage.KEYS.ASSETS, id);
+    window.showToast(_t('toast.deleted', '삭제되었습니다.'), 'success');
+    window.updateBadges?.();
+    renderAssets();
+  }
+
+  /* ── 상세 모달 ── */
+  function openModal(id) {
+    const asset = window.Storage.getData(window.Storage.KEYS.ASSETS).find(a => a.id === id);
+    if (!asset) return;
+    _currentModalId = id;
+
+    const flag = countryLabel(asset.country);
+    document.getElementById('modal-asset-title').textContent =
+      asset.copyHeadline || asset.text || _t('assets.detail', '에셋 상세');
+
+    const imgEl = document.getElementById('modal-asset-img');
+    if (imgEl) {
+      imgEl.src = asset.imageUrl || '';
+      imgEl.style.display = asset.imageUrl ? '' : 'none';
+    }
+
+    document.getElementById('modal-headline').textContent = asset.copyHeadline || '-';
+    document.getElementById('modal-subtext').textContent  = asset.copySubtext  || '-';
+    document.getElementById('modal-date').textContent     = fmtDate(asset.createdAt);
+    document.getElementById('modal-meta').innerHTML = [
+      asset.category ? catBadge(asset.category) : '',
+      flag           ? `<span class="badge badge-secondary">${flag}</span>` : '',
+      asset.channel  ? `<span class="badge badge-outline">${asset.channel}</span>` : '',
+    ].join('');
+
+    document.getElementById('asset-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('asset-modal')?.classList.add('hidden');
+    _currentModalId = null;
+  }
+
+  document.getElementById('modal-close-btn')?.addEventListener('click', closeModal);
+  document.getElementById('asset-modal')?.addEventListener('click', e => {
+    if (e.target.id === 'asset-modal') closeModal();
+  });
+  document.getElementById('modal-download-btn')?.addEventListener('click', () => {
+    if (_currentModalId) downloadAsset(_currentModalId);
+  });
+  document.getElementById('modal-delete-btn')?.addEventListener('click', () => {
+    if (_currentModalId) { closeModal(); deleteAsset(_currentModalId); }
+  });
+
+  /* ── 언어 전환 시 재렌더 훅 ── */
+  window.currentPageRender = renderAssets;
+
+  /* ── 초기 렌더 ── */
+  renderAssets();
+})();
+</script>

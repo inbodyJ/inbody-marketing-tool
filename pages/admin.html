@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 모드 — InBody Marketing Tool</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/style.css?v=3" />
+  <link rel="stylesheet" href="/css/components.css?v=3" />
+
+  <!-- PIN overlay show/hide — !important guarantees these win over any external CSS -->
+  <style>
+    #admin-pin-overlay          { display: flex   !important; }
+    #admin-pin-overlay.hidden   { display: none   !important; }
+    #admin-content              { display: none   !important; }
+    #admin-content.visible      { display: flex   !important; }
+  </style>
+
+  <!-- role="button" div hover 효과 -->
+  <style>
+    [role="button"] { transition: opacity 0.15s; }
+    [role="button"]:hover { opacity: 0.85; }
+    [role="button"][style*="background:#971B2F"]:hover {
+      background: #7A1526 !important;
+      opacity: 1;
+    }
+    [role="button"][style*="background:#ffffff"]:hover,
+    [role="button"][style*="background: #ffffff"]:hover {
+      border-color: #971B2F !important;
+      color: #971B2F !important;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="admin-page">
+<div class="app-container">
+
+  <!-- ─── 사이드바 ───────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- 로고 -->
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">IB</div>
+      <div>
+        <div class="sidebar-logo-text">InBody</div>
+        <div class="sidebar-logo-sub">Marketing Tool</div>
+      </div>
+    </div>
+
+    <!-- 내비게이션 -->
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-label" data-i18n="nav.mainFeatures">주요 기능</div>
+        <a class="nav-item" href="/">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label" data-i18n="nav.dashboard">대시보드</span>
+        </a>
+        <a class="nav-item" href="/">
+          <span class="nav-icon">✨</span>
+          <span class="nav-label" data-i18n="nav.create">에셋 생성</span>
+        </a>
+        <a class="nav-item" href="/">
+          <span class="nav-icon">🎨</span>
+          <span class="nav-label" data-i18n="nav.assets">에셋 라이브러리</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label" data-i18n="nav.content">콘텐츠</div>
+        <a class="nav-item" href="/">
+          <span class="nav-icon">📚</span>
+          <span class="nav-label" data-i18n="nav.library">프롬프트 라이브러리</span>
+        </a>
+        <a class="nav-item" href="/">
+          <span class="nav-icon">📹</span>
+          <span class="nav-label" data-i18n="nav.youtube">유튜브 처리</span>
+        </a>
+      </div>
+
+      <div class="nav-divider"></div>
+      <a href="/pages/admin.html" class="nav-item nav-item-admin active"
+         id="nav-admin" style="opacity:1;">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label" data-i18n="nav.admin">관리자</span>
+      </a>
+    </nav>
+
+    <!-- 푸터 -->
+    <div class="sidebar-footer">
+      <div class="sidebar-server-status">
+        <div class="status-dot" id="sidebar-status-dot"></div>
+        <span id="sidebar-status-text" data-i18n="common.serverChecking">서버 확인 중...</span>
+      </div>
+      <div class="sidebar-version">v1.0.0 · InBody Brand v1.0.1</div>
+    </div>
+  </aside>
+
+  <!-- ─── 메인 영역 ──────────────────────────────────────────── -->
+  <div class="main-wrapper">
+
+    <!-- 헤더 (index.html과 동일 구조) -->
+    <header class="app-header">
+      <div class="header-left">
+        <nav class="breadcrumb">
+          <span>InBody</span>
+          <span class="breadcrumb-sep">›</span>
+          <span data-i18n="admin.title">관리자 모드</span>
+        </nav>
+      </div>
+      <div class="header-right">
+        <!-- 언어 전환 -->
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">KO</button>
+          <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        </div>
+        <!-- 서버 상태 -->
+        <div class="server-status" id="server-status">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text" data-i18n="common.serverChecking">서버 확인 중...</span>
+        </div>
+        <!-- 에셋 생성 버튼은 admin-page 클래스로 숨김 -->
+        <button class="btn btn-primary btn-sm btn-create-asset"
+                style="display:none">
+          <span>+</span> <span data-i18n="nav.create">에셋 생성</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content" id="main-content">
+
+      <!-- PIN 입력 오버레이 — <style> 블록의 !important 규칙으로 표시 보장 -->
+      <div id="admin-pin-overlay"
+           style="position:fixed;inset:0;z-index:9999;background:rgba(16,24,32,0.85);align-items:center;justify-content:center;">
+        <div class="admin-pin-box">
+          <div class="admin-pin-icon">🔐</div>
+          <h2 data-i18n="admin.pinTitle">관리자 PIN 입력</h2>
+          <p data-i18n="admin.pinDesc">관리자 기능에 접근하려면 PIN을 입력하세요.</p>
+          <input type="password" id="pin-input" maxlength="4"
+                 data-i18n-placeholder="admin.pinPlaceholder"
+                 placeholder="PIN 4자리 입력"
+                 oninput="if(this.value.length===4) verifyPin()"
+                 onkeydown="if(event.key==='Enter') verifyPin()">
+          <p class="pin-error" id="pin-error" style="display:none"
+             data-i18n="admin.pinError">PIN이 올바르지 않습니다.</p>
+          <button class="btn btn-primary" onclick="verifyPin()"
+                  data-i18n="admin.pinConfirm">확인</button>
+          <a href="/" class="pin-back-link">← 대시보드로 돌아가기</a>
+        </div>
+      </div>
+
+      <!-- 관리자 콘텐츠 — <style> 블록의 !important 규칙으로 숨김 보장 -->
+      <div id="admin-content"
+           style="flex-direction:column;gap:20px;padding:24px;width:100%;">
+
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" data-i18n="admin.title">관리자 모드</h1>
+            <p class="page-subtitle" data-i18n="admin.subtitle">
+              데이터 관리 및 시스템 설정을 제어합니다.
+            </p>
+          </div>
+        </div>
+
+        <!-- ① 시스템 정보 -->
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title" data-i18n="admin.sectionSystem">시스템 정보</h2>
+          </div>
+          <div class="admin-system-grid" id="admin-system-grid">
+            <!-- JS 동적 생성 -->
+          </div>
+        </div>
+
+        <!-- ② 데이터 관리 -->
+        <div class="section-card" id="data-management-section">
+
+          <div class="section-header-row" style="margin-bottom:12px;">
+            <div class="section-header-left" style="flex-direction:column;align-items:flex-start;gap:4px;">
+              <h2 class="section-card-title" data-i18n="admin.sectionData">데이터 관리</h2>
+              <p style="font-size:12px;color:var(--color-text-light);margin:0;"
+                 data-i18n="dataManagement.subtitle">에셋, 프롬프트, 유튜브 데이터를 관리합니다.</p>
+            </div>
+          </div>
+
+          <!-- 데이터 현황 요약 -->
+          <div class="dm-stats-row" id="dm-stats-row">
+            <div class="dm-stat-chip">
+              <span class="dm-stat-num" id="dm-stat-assets">0</span>
+              <span class="dm-stat-label" data-i18n="dataManagement.statsAssets">저장된 에셋</span>
+            </div>
+            <div class="dm-stat-chip">
+              <span class="dm-stat-num" id="dm-stat-prompts">0</span>
+              <span class="dm-stat-label" data-i18n="dataManagement.statsPrompts">저장된 프롬프트</span>
+            </div>
+            <div class="dm-stat-chip">
+              <span class="dm-stat-num" id="dm-stat-youtube">0</span>
+              <span class="dm-stat-label" data-i18n="dataManagement.statsYoutube">유튜브 작업</span>
+            </div>
+            <div class="dm-stat-chip">
+              <span class="dm-stat-num" id="dm-stat-size">0 KB</span>
+              <span class="dm-stat-label" data-i18n="dataManagement.statsSize">예상 용량</span>
+            </div>
+          </div>
+
+          <div class="dm-grid">
+
+            <!-- 내보내기 -->
+            <div class="dm-card">
+              <div class="dm-card-head">
+                <span class="dm-card-icon">⬇️</span>
+                <span class="dm-card-title" data-i18n="dataManagement.exportSection">내보내기</span>
+              </div>
+              <div class="dm-card-body">
+                <div onclick="exportJSON('all')"
+                     data-i18n="dataManagement.exportAll"
+                     role="button" tabindex="0"
+                     onkeydown="if(event.key==='Enter'||event.key===' ')exportJSON('all')"
+                     style="display:flex;align-items:center;width:100%;height:40px;padding:0 14px;margin:0 0 8px 0;background:#971B2F;color:#ffffff;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;box-sizing:border-box;font-family:inherit;line-height:1;-webkit-user-select:none;user-select:none;">
+                  전체 내보내기 (JSON)
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <div onclick="exportCSV()"
+                       data-i18n="dataManagement.exportCSV"
+                       role="button" tabindex="0"
+                       onkeydown="if(event.key==='Enter'||event.key===' ')exportCSV()"
+                       style="display:flex;align-items:center;height:40px;padding:0 14px;background:#ffffff;color:#4B4F5A;border:0.5px solid #E2E4E8;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;box-sizing:border-box;font-family:inherit;-webkit-user-select:none;user-select:none;">
+                    CSV로 내보내기
+                  </div>
+                  <div onclick="openExportModal()"
+                       data-i18n="dataManagement.exportFiltered"
+                       role="button" tabindex="0"
+                       onkeydown="if(event.key==='Enter'||event.key===' ')openExportModal()"
+                       style="display:flex;align-items:center;height:40px;padding:0 14px;background:#ffffff;color:#4B4F5A;border:0.5px solid #E2E4E8;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;box-sizing:border-box;font-family:inherit;-webkit-user-select:none;user-select:none;">
+                    필터 내보내기
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 가져오기 -->
+            <div class="dm-card">
+              <div class="dm-card-head">
+                <span class="dm-card-icon">⬆️</span>
+                <span class="dm-card-title" data-i18n="dataManagement.importSection">가져오기</span>
+              </div>
+              <div class="dm-card-body">
+                <p class="dm-card-desc" data-i18n="dataManagement.importDesc">
+                  이전에 내보낸 JSON 파일을 불러옵니다.
+                </p>
+                <div class="dm-import-options">
+                  <label class="dm-radio">
+                    <input type="radio" name="importMode" value="merge" checked>
+                    <span data-i18n="dataManagement.importMerge">기존 데이터와 합치기</span>
+                  </label>
+                  <label class="dm-radio">
+                    <input type="radio" name="importMode" value="replace">
+                    <span data-i18n="dataManagement.importReplace">기존 데이터 덮어쓰기</span>
+                  </label>
+                </div>
+                <div onclick="document.getElementById('import-file').click()"
+                     data-i18n="dataManagement.importBtn"
+                     role="button" tabindex="0"
+                     style="display:flex;align-items:center;height:40px;padding:0 14px;background:#ffffff;color:#4B4F5A;border:0.5px solid #E2E4E8;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;box-sizing:border-box;font-family:inherit;-webkit-user-select:none;user-select:none;">
+                  JSON 가져오기
+                </div>
+                <input type="file" id="import-file" accept=".json"
+                       style="display:none" onchange="importJSON(event)">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ③④ 고급 설정 (PIN 변경 + 초기화 아코디언) -->
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title"
+                data-i18n="admin.advancedSettings">고급 설정</h2>
+          </div>
+
+          <!-- 자동 백업 아코디언 -->
+          <div class="accordion-item" id="acc-backup">
+            <div class="accordion-header"
+                 onclick="toggleAccordion('acc-backup')">
+              <div class="accordion-title">
+                <span>🔄</span>
+                <span data-i18n="dataManagement.backupSection">자동 백업</span>
+              </div>
+              <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-body">
+              <p style="font-size:12px; color:var(--ib-gray-2); margin:0 0 12px;"
+                 data-i18n="dataManagement.backupDesc">
+                매주 월요일 접속 시 자동으로 JSON을 다운로드합니다.
+              </p>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; align-items:center;
+                            justify-content:space-between; font-size:13px;">
+                  <span data-i18n="dataManagement.backupToggle">자동 백업 사용</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="auto-backup-toggle"
+                           onchange="toggleAutoBackup(this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div style="display:flex; justify-content:space-between;
+                            font-size:12px; color:var(--ib-gray-2);
+                            background:#fff; border:0.5px solid var(--color-border);
+                            border-radius:var(--radius); padding:8px 12px;">
+                  <span data-i18n="dataManagement.backupLastDate">마지막 백업</span>
+                  <span id="last-backup-date">—</span>
+                </div>
+                <div onclick="exportJSON('backup')"
+                     data-i18n="dataManagement.backupNow"
+                     role="button" tabindex="0"
+                     style="display:inline-flex;align-items:center;height:36px;padding:0 16px;background:#ffffff;color:#4B4F5A;border:0.5px solid #E2E4E8;border-radius:8px;font-size:13px;cursor:pointer;box-sizing:border-box;font-family:inherit;-webkit-user-select:none;user-select:none;">
+                  지금 백업
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIN 변경 아코디언 -->
+          <div class="accordion-item" id="acc-pin">
+            <div class="accordion-header"
+                 onclick="toggleAccordion('acc-pin')">
+              <div class="accordion-title">
+                <span>🔑</span>
+                <span data-i18n="admin.pinChange">PIN 변경</span>
+              </div>
+              <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-body">
+              <div style="display:flex; flex-direction:column;
+                          gap:10px; max-width:280px;">
+                <div>
+                  <label style="font-size:12px; font-weight:500;
+                                 color:var(--ib-gray-3); display:block;
+                                 margin-bottom:5px;"
+                         data-i18n="admin.pinCurrentLabel">현재 PIN</label>
+                  <input type="password" id="current-pin" maxlength="4"
+                         placeholder="현재 PIN"
+                         style="height:40px; width:100%; padding:0 12px;
+                                border:0.5px solid var(--color-border);
+                                border-radius:var(--radius); font-size:14px;
+                                letter-spacing:4px; box-sizing:border-box;
+                                font-family:inherit; background:#fff;">
+                </div>
+                <div>
+                  <label style="font-size:12px; font-weight:500;
+                                 color:var(--ib-gray-3); display:block;
+                                 margin-bottom:5px;"
+                         data-i18n="admin.pinNewLabel">새 PIN</label>
+                  <input type="password" id="new-pin" maxlength="4"
+                         placeholder="새 PIN 4자리"
+                         style="height:40px; width:100%; padding:0 12px;
+                                border:0.5px solid var(--color-border);
+                                border-radius:var(--radius); font-size:14px;
+                                letter-spacing:4px; box-sizing:border-box;
+                                font-family:inherit; background:#fff;">
+                </div>
+                <button onclick="changePin()"
+                        data-i18n="admin.pinChange"
+                        style="all:unset; height:40px; padding:0 20px;
+                               background:var(--ib-primary); color:#fff;
+                               border-radius:var(--radius); font-size:13px;
+                               font-weight:500; cursor:pointer;
+                               box-sizing:border-box; font-family:inherit;
+                               display:flex; align-items:center;
+                               justify-content:center; width:fit-content;">
+                  PIN 변경
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 초기화 아코디언 -->
+          <div class="accordion-item danger" id="acc-reset">
+            <div class="accordion-header"
+                 onclick="toggleAccordion('acc-reset')">
+              <div class="accordion-title">
+                <span>⚠️</span>
+                <span data-i18n="admin.sectionReset">초기화</span>
+                <span style="font-size:10px; background:var(--ib-primary-light);
+                             color:var(--ib-primary); padding:1px 7px;
+                             border-radius:10px; font-weight:500;"
+                      data-i18n="admin.resetAdminNote">관리자 전용</span>
+              </div>
+              <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-body">
+              <p style="font-size:12px; color:var(--ib-gray-2); margin:0 0 12px;"
+                 data-i18n="admin.resetWarning">
+                초기화된 데이터는 복구할 수 없습니다. 신중하게 사용하세요.
+              </p>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button onclick="adminReset('assets')"
+                        data-i18n="admin.resetAssets"
+                        style="all:unset; height:36px; padding:0 14px;
+                               border:0.5px solid var(--color-border);
+                               border-radius:var(--radius); font-size:12px;
+                               color:var(--ib-gray-3); cursor:pointer;
+                               box-sizing:border-box; font-family:inherit;
+                               background:#fff; display:flex; align-items:center;">
+                  에셋만 초기화
+                </button>
+                <button onclick="adminReset('prompts')"
+                        data-i18n="admin.resetPrompts"
+                        style="all:unset; height:36px; padding:0 14px;
+                               border:0.5px solid var(--color-border);
+                               border-radius:var(--radius); font-size:12px;
+                               color:var(--ib-gray-3); cursor:pointer;
+                               box-sizing:border-box; font-family:inherit;
+                               background:#fff; display:flex; align-items:center;">
+                  프롬프트만 초기화
+                </button>
+                <button onclick="adminReset('youtube')"
+                        data-i18n="admin.resetYoutube"
+                        style="all:unset; height:36px; padding:0 14px;
+                               border:0.5px solid var(--color-border);
+                               border-radius:var(--radius); font-size:12px;
+                               color:var(--ib-gray-3); cursor:pointer;
+                               box-sizing:border-box; font-family:inherit;
+                               background:#fff; display:flex; align-items:center;">
+                  유튜브 기록만 초기화
+                </button>
+                <button onclick="adminReset('all')"
+                        data-i18n="admin.resetAll"
+                        style="all:unset; height:36px; padding:0 14px;
+                               border:1px solid var(--ib-primary);
+                               border-radius:var(--radius); font-size:12px;
+                               font-weight:600; color:var(--ib-primary);
+                               cursor:pointer; box-sizing:border-box;
+                               font-family:inherit;
+                               background:var(--ib-primary-light);
+                               display:flex; align-items:center;">
+                  전체 초기화
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ⑤ 관리자 모드 종료 -->
+        <div class="section-card" style="text-align:center; padding: 1.5rem;">
+          <button class="btn-outline-danger" onclick="adminLogout()"
+                  data-i18n="admin.logout">관리자 모드 종료</button>
+          <p style="font-size:11px; color:var(--ib-gray-2); margin-top:8px;"
+             data-i18n="admin.logoutDesc">종료 후 PIN을 다시 입력해야 합니다.</p>
+        </div>
+
+      </div><!-- /#admin-content -->
+
+    </main>
+  </div>
+
+</div><!-- /.app-container -->
+
+<!-- 토스트 알림 -->
+<div id="toast-container"></div>
+
+<!-- 필터 내보내기 모달 -->
+<div class="modal-overlay" id="export-modal" style="display:none"
+     onclick="if(event.target===this) closeExportModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 data-i18n="dataManagement.exportModalTitle">내보내기 옵션</h3>
+      <button class="modal-close" onclick="closeExportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label data-i18n="common.category">데이터 종류</label>
+        <select id="export-type">
+          <option value="all"     data-i18n="dataManagement.exportTypeAll">전체 데이터</option>
+          <option value="assets"  data-i18n="dataManagement.exportTypeAssets">에셋만</option>
+          <option value="prompts" data-i18n="dataManagement.exportTypePrompts">프롬프트만</option>
+          <option value="youtube" data-i18n="dataManagement.exportTypeYoutube">유튜브 작업만</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label data-i18n="common.country">국가</label>
+        <select id="export-country">
+          <option value="all" data-i18n="dataManagement.exportCountryAll">전체 국가</option>
+          <option value="KR"  data-i18n="dataManagement.exportCountryKR">한국만</option>
+          <option value="AU"  data-i18n="dataManagement.exportCountryAU">호주만</option>
+          <option value="UK"  data-i18n="dataManagement.exportCountryUK">영국만</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label data-i18n="common.period">기간</label>
+        <select id="export-period">
+          <option value="all"   data-i18n="dataManagement.exportPeriodAll">전체 기간</option>
+          <option value="month" data-i18n="dataManagement.exportPeriodMonth">이번 달</option>
+          <option value="week"  data-i18n="dataManagement.exportPeriodWeek">이번 주</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeExportModal()"
+              data-i18n="common.cancel">취소</button>
+      <button class="btn-primary" onclick="exportFiltered()"
+              data-i18n="dataManagement.exportConfirm">내보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 스크립트 (순서 중요: i18n → storage → admin) -->
+<script src="/js/i18n.js"></script>
+<script src="/js/storage.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

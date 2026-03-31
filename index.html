@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InBody Marketing Tool</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css?v=15" />
+  <link rel="stylesheet" href="css/components.css?v=15" />
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- ─── 사이드바 ──────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+
+      <!-- 로고 -->
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">IB</div>
+        <div>
+          <div class="sidebar-logo-text">InBody</div>
+          <div class="sidebar-logo-sub">Marketing Tool</div>
+        </div>
+      </div>
+
+      <!-- 내비게이션 -->
+      <nav class="sidebar-nav" id="main-nav">
+
+        <div class="nav-section">
+          <div class="nav-section-label" data-i18n="nav.mainFeatures">주요 기능</div>
+
+          <a class="nav-item" data-page="dashboard" href="#">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label" data-i18n="nav.dashboard">대시보드</span>
+          </a>
+
+          <a class="nav-item" data-page="create" href="#">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label" data-i18n="nav.create">에셋 생성</span>
+          </a>
+
+          <a class="nav-item" data-page="assets" href="#">
+            <span class="nav-icon">🎨</span>
+            <span class="nav-label" data-i18n="nav.assets">에셋 라이브러리</span>
+            <span class="nav-badge" id="badge-assets">0</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label" data-i18n="nav.content">콘텐츠</div>
+
+          <a class="nav-item" data-page="library" href="#">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label" data-i18n="nav.library">프롬프트 라이브러리</span>
+            <span class="nav-badge" id="badge-prompts">0</span>
+          </a>
+
+          <a class="nav-item" data-page="youtube" href="#">
+            <span class="nav-icon">📹</span>
+            <span class="nav-label" data-i18n="nav.youtube">유튜브 처리</span>
+            <span class="nav-badge" id="badge-youtube">0</span>
+          </a>
+
+        </div>
+
+      </nav>
+
+      <!-- 관리자 링크 -->
+      <div class="nav-divider"></div>
+      <a href="/pages/admin.html" class="nav-item nav-item-admin"
+         id="nav-admin">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label" data-i18n="nav.admin">관리자</span>
+      </a>
+
+      <!-- 푸터 -->
+      <div class="sidebar-footer">
+        <div class="sidebar-server-status">
+          <div class="status-dot" id="sidebar-status-dot"></div>
+          <span id="sidebar-status-text" data-i18n="common.serverChecking">서버 확인 중...</span>
+        </div>
+        <div class="sidebar-version">v1.0.0 · InBody Brand v1.0.1</div>
+      </div>
+    </aside>
+
+    <!-- ─── 메인 영역 ─────────────────────────────────────── -->
+    <div class="main-wrapper">
+
+      <!-- 헤더 -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="btn btn-ghost btn-icon-only" id="sidebar-toggle" title="사이드바 토글">☰</button>
+          <nav class="breadcrumb">
+            <span>InBody</span>
+            <span class="breadcrumb-sep">›</span>
+            <span id="breadcrumb-current">대시보드</span>
+          </nav>
+        </div>
+
+        <div class="header-right">
+          <!-- 언어 전환 -->
+          <div class="lang-toggle">
+            <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">KO</button>
+            <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+          </div>
+
+          <!-- 서버 상태 -->
+          <div class="server-status" id="server-status">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text" data-i18n="common.serverChecking">서버 확인 중...</span>
+          </div>
+
+          <!-- 빠른 생성 버튼 -->
+          <button class="btn btn-primary btn-sm" onclick="navigateTo('create')">
+            <span>+</span> <span data-i18n="nav.create">에셋 생성</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- 메인 콘텐츠 (페이지 인젝션 영역) -->
+      <main class="main-content" id="main-content">
+        <!-- 초기 로딩 -->
+        <div class="flex-center" style="height: 60vh;">
+          <div class="loading-box">
+            <div class="spinner"></div>
+            <p data-i18n="common.loading">로딩 중...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+  </div><!-- /.app-container -->
+
+  <!-- ─── 토스트 알림 영역 ─────────────────────────────────── -->
+  <div id="toast-container"></div>
+
+  <!-- ─── 스크립트 ─────────────────────────────────────────── -->
+  <!-- 순서 중요: i18n → storage → api → 기능별 js → script -->
+  <script src="js/i18n.js?v=15"></script>
+  <script src="js/storage.js?v=15"></script>
+  <script src="js/api.js?v=15"></script>
+  <script src="js/wizard.js?v=15"></script>
+  <script src="js/youtube.js?v=15"></script>
+  <script src="js/dashboard.js?v=15"></script>
+  <script src="js/brand.js?v=15"></script>
+  <script src="script.js?v=15"></script>
+</body>
+</html>

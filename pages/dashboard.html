@@ -1,0 +1,730 @@
+<!-- =====================================================
+     pages/dashboard.html — 분석 대시보드
+     ===================================================== -->
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- ── 헤더 ── -->
+<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-5);">
+  <div>
+    <h1 style="font-size:var(--text-2xl);font-weight:700;color:var(--color-secondary);margin-bottom:2px;" data-i18n="dashboard.title">대시보드</h1>
+    <p style="color:var(--color-text-light);font-size:var(--text-sm);" data-i18n="dashboard.subtitle">마케팅 에셋 현황과 활동 통계를 확인하세요.</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:var(--space-3);">
+    <span id="last-updated-text" style="font-size:var(--text-xs);color:var(--color-text-muted);"></span>
+    <button class="btn btn-outline" id="btn-dash-refresh" style="display:flex;align-items:center;gap:6px;">
+      <span id="refresh-icon" style="display:inline-block;">↻</span> <span data-i18n="dashboard.refresh">새로고침</span>
+    </button>
+  </div>
+</div>
+
+<div class="dashboard-content">
+
+<!-- ── D형 지표 카드 4개 ── -->
+<div class="metrics-grid">
+
+  <!-- 카드 1: 총 에셋 -->
+  <div class="metric-card">
+    <div class="metric-card-bar" style="background: var(--card-assets);"></div>
+    <div class="metric-card-body">
+      <div class="metric-card-top">
+        <div class="metric-icon" style="background: var(--ib-primary-light);">🎨</div>
+        <div class="metric-num" id="val-assets">0</div>
+      </div>
+      <div class="metric-label" data-i18n="dashboard.totalAssets">총 에셋</div>
+      <div class="metric-progress-wrap">
+        <div class="metric-progress-bg">
+          <div class="metric-progress-fill" id="prog-assets" style="width:0%; background: var(--card-assets);"></div>
+        </div>
+        <div class="metric-progress-label">
+          <span class="metric-sub" id="desc-assets">0개 카테고리</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카드 2: 프롬프트 -->
+  <div class="metric-card">
+    <div class="metric-card-bar" style="background: var(--card-prompts);"></div>
+    <div class="metric-card-body">
+      <div class="metric-card-top">
+        <div class="metric-icon" style="background: var(--ib-blue-gray-light);">📋</div>
+        <div class="metric-num" id="val-prompts">0</div>
+      </div>
+      <div class="metric-label" data-i18n="dashboard.totalPrompts">프롬프트</div>
+      <div class="metric-progress-wrap">
+        <div class="metric-progress-bg">
+          <div class="metric-progress-fill" id="prog-prompts" style="width:0%; background: var(--card-prompts);"></div>
+        </div>
+        <div class="metric-progress-label">
+          <span class="metric-sub" id="desc-prompts">총 0회 사용</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카드 3: 유튜브 작업 -->
+  <div class="metric-card">
+    <div class="metric-card-bar" style="background: var(--card-youtube);"></div>
+    <div class="metric-card-body">
+      <div class="metric-card-top">
+        <div class="metric-icon" style="background: var(--ib-blue-gray-light);">🎬</div>
+        <div class="metric-num" id="val-youtube">0</div>
+      </div>
+      <div class="metric-label" data-i18n="dashboard.youtubeJobs">유튜브 작업</div>
+      <div class="metric-progress-wrap">
+        <div class="metric-progress-bg">
+          <div class="metric-progress-fill" id="prog-youtube" style="width:0%; background: var(--card-youtube);"></div>
+        </div>
+        <div class="metric-progress-label">
+          <span class="metric-sub" id="desc-youtube">완료: 0개</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카드 4: 이번 달 생성 수 -->
+  <div class="metric-card">
+    <div class="metric-card-bar" style="background: var(--card-complete);"></div>
+    <div class="metric-card-body">
+      <div class="metric-card-top">
+        <div class="metric-icon" style="background:#E8F5E9;">📅</div>
+        <div class="metric-num" id="val-thismonth">0</div>
+      </div>
+      <div class="metric-label" data-i18n="dashboard.thisMonth">이번 달</div>
+      <div class="metric-progress-wrap">
+        <div class="metric-progress-bg">
+          <div class="metric-progress-fill" id="prog-thismonth" style="width:0%; background: var(--card-complete);"></div>
+        </div>
+        <div class="metric-progress-label">
+          <span class="metric-sub" id="desc-thismonth" data-i18n="dashboard.thisMonthNoData">전월 데이터 없음</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── 카테고리별 에셋 ── -->
+<div class="section-card">
+  <div class="section-header-row" style="margin-bottom:12px;">
+    <h2 class="section-card-title" data-i18n="dashboard.categoryChart">카테고리별 에셋</h2>
+  </div>
+  <div id="category-bar-chart"><!-- JS 동적 생성 --></div>
+</div>
+
+<!-- ── 국가별 현황 (통합) ── -->
+<div class="section-card" id="country-overview-section">
+
+  <div class="section-header-row" style="margin-bottom:12px;">
+    <h2 class="section-card-title" data-i18n="dashboard.countryOverview">국가별 현황</h2>
+    <span class="section-month" id="overview-month"></span>
+  </div>
+
+  <!-- 국가 카드 3개 -->
+  <div class="country-unified-grid" id="country-cards-grid">
+    <!-- JS 동적 생성 -->
+  </div>
+
+</div>
+
+<!-- ── 최근 에셋 ── -->
+<div class="section-card">
+  <div class="section-header">
+    <h2 class="section-title" data-i18n="dashboard.recentAssets">최근 생성 에셋</h2>
+    <a href="#" onclick="navigateTo('assets');return false;"
+       class="section-view-all" data-i18n="dashboard.viewAll">전체 보기</a>
+  </div>
+  <div class="recent-assets-grid" id="recent-assets-grid">
+    <!-- JS 동적 생성 -->
+  </div>
+</div>
+
+<!-- ── 인기 프롬프트 ── -->
+<div class="section-card">
+  <div class="section-header">
+    <h2 class="section-title" data-i18n="dashboard.topPrompts">인기 프롬프트 Top 5</h2>
+    <a href="#" onclick="navigateTo('library');return false;"
+       class="section-view-all" data-i18n="dashboard.viewAll">전체 보기</a>
+  </div>
+  <div id="top-prompts"><!-- JS 동적 생성 --></div>
+</div>
+
+</div><!-- /.dashboard-content -->
+
+<style>
+/* ── 대시보드 테이블 ── */
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.dash-table th {
+  background: var(--color-bg);
+  padding: var(--space-2) var(--space-4);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-light);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-border);
+}
+.dash-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+  color: var(--color-text);
+}
+.dash-table tbody tr:last-child td { border-bottom: none; }
+.dash-table tbody tr:hover { background: var(--color-bg); }
+.dash-table .empty-row {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: var(--space-8);
+}
+.dash-table .sample-row td { opacity: 0.6; }
+
+/* ── 썸네일 ── */
+.dash-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: 1px solid var(--color-border-light);
+}
+.dash-thumb img { width:100%;height:100%;border-radius:var(--radius-sm);object-fit:cover; }
+
+/* ── KPI 카드 ── */
+.kpi-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--kpi-color, var(--color-primary));
+}
+.kpi-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.kpi-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  background: var(--kpi-icon-bg, rgba(232,0,29,0.1));
+  flex-shrink: 0;
+}
+.kpi-trend {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 20px;
+}
+.kpi-trend.up   { color: #00A878; background: rgba(0,168,120,0.1); }
+.kpi-trend.down { color: #E63946; background: rgba(230,57,70,0.1); }
+.kpi-trend.neutral { color: var(--color-text-muted); background: var(--color-bg); }
+.kpi-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  line-height: 1;
+  margin-top: var(--space-2);
+}
+.kpi-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-light);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.kpi-sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 900px) {
+  #kpi-cards { grid-template-columns: repeat(2,1fr) !important; }
+}
+@media (max-width: 600px) {
+  #kpi-cards { grid-template-columns: 1fr 1fr !important; }
+}
+</style>
+
+<script>
+(function () {
+  /* ── 차트 인스턴스 보관 ── */
+  const _charts = {};
+
+  /* ── 날짜 포맷 ── */
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    const loc = window.getCurrentLang?.() === 'en' ? 'en-AU' : 'ko-KR';
+    return new Date(iso).toLocaleDateString(loc, { month: 'short', day: 'numeric' });
+  }
+
+  /* ── 텍스트 자르기 ── */
+  function trunc(str, n) {
+    if (!str) return '-';
+    return str.length > n ? str.slice(0, n) + '…' : str;
+  }
+
+  /* ── 14일 날짜 배열 ── */
+  function last14Days() {
+    const days = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+    return days;
+  }
+
+  /* ── 랜덤 샘플 트렌드 ── */
+  function sampleTrend() {
+    return Array.from({ length: 14 }, () => Math.floor(Math.random() * 6));
+  }
+
+  /* ── 샘플 배지 표시/숨김 ── */
+  function setSampleBadge(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? 'inline-flex' : 'none';
+  }
+
+  /* ── 번역 헬퍼 ── */
+  const _t = (key, fallback) => window.t ? t(key) : fallback;
+
+  /* ── 마지막 업데이트 텍스트 ── */
+  function setLastUpdated() {
+    const el = document.getElementById('last-updated-text');
+    if (el) el.textContent = `${_t('dashboard.lastUpdated','마지막 업데이트')}: ${_t('dashboard.justNow','방금 전')}`;
+  }
+
+  /* ── 지난 7일 에셋 수 ── */
+  function countLast7Days(assets) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 7);
+    return assets.filter(a => a.createdAt && new Date(a.createdAt) >= cutoff).length;
+  }
+
+  /* ── KPI 렌더 ── */
+  function renderKPI() {
+    const assets  = window.Storage.getData(window.Storage.KEYS.ASSETS);
+    const prompts = window.Storage.getData(window.Storage.KEYS.PROMPTS);
+    const ytJobs  = window.Storage.getData(window.Storage.KEYS.YOUTUBE_JOBS);
+
+    const auCount = assets.filter(a => a.country === 'AU').length;
+    const ukCount = assets.filter(a => a.country === 'UK').length;
+    const total   = assets.length || 1;
+    const auPct   = Math.round((auCount / total) * 100);
+
+    const ytDone  = ytJobs.filter(j => j.status === 'done').length;
+    const last7   = countLast7Days(assets);
+    const trendNum = last7 > 0 ? `▲ ${last7}` : '—';
+    const trendCls = last7 > 0 ? 'up' : 'neutral';
+
+    const catCount      = Object.keys(assets.reduce((acc, a) => { if (a.category) acc[a.category] = 1; return acc; }, {})).length;
+    const totalUseCount = prompts.reduce((s, p) => s + (p.useCount || 0), 0);
+
+    const cards = [
+      {
+        icon: '🎨', label: _t('dashboard.totalAssets', '총 에셋'),
+        value: assets.length,
+        sub: _t('dashboard.totalAssetsDesc', '{n}개 카테고리').replace('{n}', catCount),
+        color: '#971B2F', iconBg: 'rgba(151,27,47,0.1)',
+        trend: trendNum, trendCls,
+        trendTitle: _t('dashboard.last7Days', '지난 7일'),
+      },
+      {
+        icon: '📚', label: _t('dashboard.totalPrompts', '프롬프트'),
+        value: prompts.length,
+        sub: _t('dashboard.totalPromptsDesc', '총 {n}회 사용').replace('{n}', totalUseCount),
+        color: '#101820', iconBg: 'rgba(16,24,32,0.08)',
+        trend: '—', trendCls: 'neutral', trendTitle: '',
+      },
+      {
+        icon: '▶️', label: _t('dashboard.youtubeJobs', '유튜브 작업'),
+        value: ytDone,
+        sub: _t('dashboard.youtubeJobsDesc', '완료: {n}개').replace('{n}', ytJobs.length),
+        color: '#971B2F', iconBg: 'rgba(151,27,47,0.1)',
+        trend: ytDone > 0 ? `${ytDone}${_t('youtube.historyItems','건')}` : '—',
+        trendCls: ytDone > 0 ? 'up' : 'neutral',
+        trendTitle: _t('dashboard.ytJobsDone', '완료'),
+      },
+      {
+        icon: '🌏', label: _t('dashboard.completionRate', '완료율'),
+        value: assets.length === 0 ? '-' : `${auPct}%`,
+        sub: _t('dashboard.completionRateDesc', '전체 에셋 기준'),
+        color: '#67767F', iconBg: 'rgba(103,118,127,0.1)',
+        trend: assets.length === 0 ? '—' : `${_t('common.country_au','AU')} ${auPct}%`,
+        trendCls: 'neutral', trendTitle: '',
+      },
+    ];
+
+    const grid = document.getElementById('kpi-cards');
+    if (!grid) return;
+    grid.innerHTML = cards.map(c => `
+      <div class="kpi-card" style="--kpi-color:${c.color};--kpi-icon-bg:${c.iconBg};">
+        <div class="kpi-card-top">
+          <div class="kpi-icon-circle">${c.icon}</div>
+          <span class="kpi-trend ${c.trendCls}" title="${c.trendTitle}">${c.trend}</span>
+        </div>
+        <div class="kpi-value">${c.value}</div>
+        <div class="kpi-label">${c.label}</div>
+        <div class="kpi-sub">${c.sub}</div>
+      </div>`).join('');
+  }
+
+  /* ── 카테고리 막대 차트 ── */
+  function renderCategoryChart() {
+    const assets = window.Storage.getData(window.Storage.KEYS.ASSETS);
+    const cats   = ['sns', 'b2b', 'event', 'youtube', 'shorts'];
+    const isSample = assets.length === 0;
+    const counts = isSample
+      ? [12, 5, 8, 3, 4]
+      : cats.map(c => assets.filter(a => a.category === c).length);
+
+    setSampleBadge('sample-badge-category', isSample);
+
+    const ctx = document.getElementById('chart-category');
+    if (!ctx) return;
+
+    _charts.category?.destroy();
+    _charts.category = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['SNS', 'B2B', 'Event', 'YouTube', 'Shorts'],
+        datasets: [{
+          label: _t('dashboard.chartAssets', '에셋 수'),
+          data: counts,
+          backgroundColor: isSample
+            ? ['rgba(151,27,47,0.3)', 'rgba(16,24,32,0.2)', 'rgba(122,21,38,0.25)', 'rgba(103,118,127,0.2)', 'rgba(162,178,200,0.25)']
+            : ['#971B2F', '#101820', '#7A1526', '#67767F', '#A2B2C8'],
+          borderRadius: 6,
+          borderSkipped: false,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { size: 11 } },
+            grid: { color: '#F0F0F0' },
+          },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+  }
+
+  /* ── 국가 도넛 차트 (중앙 텍스트 포함) ── */
+  function renderCountryChart() {
+    const assets = window.Storage.getData(window.Storage.KEYS.ASSETS);
+    const isSample = assets.length === 0;
+    const au    = isSample ? 18 : assets.filter(a => a.country === 'AU').length;
+    const uk    = isSample ? 14 : assets.filter(a => a.country === 'UK').length;
+    const other = isSample ? 0  : (assets.length - au - uk);
+    const totalCount = au + uk + other;
+
+    setSampleBadge('sample-badge-country', isSample);
+
+    const ctx = document.getElementById('chart-country');
+    if (!ctx) return;
+
+    const centerTextPlugin = {
+      id: 'centerText',
+      beforeDraw(chart) {
+        const { ctx: c, chartArea: { top, bottom, left, right } } = chart;
+        const cx = (left + right) / 2;
+        const cy = (top + bottom) / 2;
+        c.save();
+        c.font = 'bold 22px Inter, sans-serif';
+        c.fillStyle = '#101820';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(totalCount, cx, cy - 9);
+        c.font = '11px Inter, sans-serif';
+        c.fillStyle = '#888888';
+        c.fillText(_t('dashboard.chartTotal', 'total'), cx, cy + 11);
+        c.restore();
+      }
+    };
+
+    _charts.country?.destroy();
+    _charts.country = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['🇦🇺 AU', '🇬🇧 UK', _t('dashboard.chartOther', '기타')],
+        datasets: [{
+          data: other > 0 ? [au, uk, other] : [au, uk],
+          labels: other > 0 ? ['🇦🇺 AU', '🇬🇧 UK', _t('dashboard.chartOther', '기타')] : ['🇦🇺 AU', '🇬🇧 UK'],
+          backgroundColor: isSample
+            ? ['rgba(151,27,47,0.35)', 'rgba(16,24,32,0.25)']
+            : (other > 0 ? ['#971B2F', '#101820', '#A2B2C8'] : ['#971B2F', '#101820']),
+          borderWidth: 3,
+          borderColor: '#fff',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { size: 11 }, padding: 12 },
+          },
+        },
+        cutout: '65%',
+      },
+      plugins: [centerTextPlugin],
+    });
+  }
+
+  /* ── 14일 추이 선 차트 ── */
+  function renderTrendChart() {
+    const assets = window.Storage.getData(window.Storage.KEYS.ASSETS);
+    const isSample = assets.length === 0;
+    const days = last14Days();
+
+    const counts = isSample
+      ? sampleTrend()
+      : days.map(day => assets.filter(a => a.createdAt && a.createdAt.slice(0, 10) === day).length);
+
+    setSampleBadge('sample-badge-trend', isSample);
+
+    const labels = days.map(d => {
+      const dt = new Date(d);
+      return `${dt.getMonth() + 1}/${dt.getDate()}`;
+    });
+
+    const ctx = document.getElementById('chart-trend');
+    if (!ctx) return;
+
+    _charts.trend?.destroy();
+    _charts.trend = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: _t('dashboard.chartTrend', '에셋 생성 수'),
+          data: counts,
+          borderColor: isSample ? 'rgba(151,27,47,0.45)' : '#971B2F',
+          backgroundColor: isSample ? 'rgba(151,27,47,0.04)' : 'rgba(151,27,47,0.08)',
+          borderWidth: 2,
+          pointBackgroundColor: isSample ? 'rgba(151,27,47,0.45)' : '#971B2F',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.4,
+          borderDash: isSample ? [4, 3] : [],
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { size: 11 } },
+            grid: { color: '#F0F0F0' },
+          },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+  }
+
+  /* ── 최근 에셋 테이블 ── */
+  function renderRecentAssets() {
+    const assets = window.Storage.getData(window.Storage.KEYS.ASSETS)
+      .slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+
+    const tbody = document.getElementById('recent-assets-body');
+    if (!tbody) return;
+
+    if (!assets.length) {
+      const auLabel = _t('common.country_au', '🇦🇺 호주');
+      const ukLabel = _t('common.country_uk', '🇬🇧 영국');
+      const sampleRows = [
+        { icon: '🏋️', headline: 'InBody 970으로 체성분 관리하세요', cat: 'SNS', flag: auLabel, date: _t('dashboard.sampleData','샘플') },
+        { icon: '📊', headline: 'B2B 체성분 분석 솔루션', cat: 'B2B', flag: ukLabel, date: _t('dashboard.sampleData','샘플') },
+        { icon: '🎉', headline: 'EOFY 특별 이벤트 — 지금 예약하세요', cat: 'Event', flag: auLabel, date: _t('dashboard.sampleData','샘플') },
+      ];
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="padding:var(--space-2) var(--space-4);padding-bottom:0;">
+            <span class="badge badge-outline badge-sm" style="font-size:10px;color:var(--color-text-muted);">${_t('common.sampleData','샘플 데이터 미리보기')}</span>
+          </td>
+        </tr>
+        ${sampleRows.map(r => `
+        <tr class="sample-row">
+          <td><div class="dash-thumb" style="font-size:18px;">${r.icon}</div></td>
+          <td style="font-weight:600;">${r.headline}</td>
+          <td><span class="badge badge-primary" style="font-size:10px;opacity:0.6;">${r.cat}</span></td>
+          <td>${r.flag}</td>
+          <td style="color:var(--color-text-muted);font-size:var(--text-xs);">${r.date}</td>
+        </tr>`).join('')}`;
+      return;
+    }
+
+    tbody.innerHTML = assets.map(a => {
+      const flag = a.country === 'AU' ? '🇦🇺' : a.country === 'UK' ? '🇬🇧' : '🌐';
+      const thumb = a.imageUrl
+        ? `<div class="dash-thumb"><img src="${a.imageUrl}" alt="" /></div>`
+        : `<div class="dash-thumb" style="font-size:18px;">🎨</div>`;
+      return `
+        <tr>
+          <td>${thumb}</td>
+          <td style="font-weight:600;">${trunc(a.copyHeadline || a.text, 28)}</td>
+          <td><span class="badge badge-primary" style="font-size:10px;">${(a.category || '-').toUpperCase()}</span></td>
+          <td>${flag}</td>
+          <td style="color:var(--color-text-muted);font-size:var(--text-xs);">${fmtDate(a.createdAt)}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ── 인기 프롬프트 테이블 ── */
+  function renderTopPrompts() {
+    const prompts = window.Storage.getData(window.Storage.KEYS.PROMPTS)
+      .slice().sort((a, b) => (b.useCount || 0) - (a.useCount || 0))
+      .slice(0, 5);
+
+    const tbody = document.getElementById('top-prompts-body');
+    if (!tbody) return;
+
+    if (!prompts.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-row">${_t('dashboard.noPrompts','저장된 프롬프트가 없습니다.')}</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = prompts.map((p, i) => {
+      const stars = '★'.repeat(p.rating || 0) + '☆'.repeat(5 - (p.rating || 0));
+      return `
+        <tr>
+          <td style="color:var(--color-text-muted);font-size:var(--text-xs);font-weight:700;">${i + 1}</td>
+          <td style="font-size:var(--text-xs);">${trunc(p.text, 45)}</td>
+          <td style="font-weight:700;color:var(--color-primary);">${p.useCount || 0}</td>
+          <td style="color:#F4A261;letter-spacing:-2px;font-size:12px;">${stars}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ── 전체 렌더 ── */
+  function render() {
+    renderKPI();
+    renderCategoryChart();
+    renderCountryChart();
+    renderTrendChart();
+    renderRecentAssets();
+    renderTopPrompts();
+    setLastUpdated();
+  }
+
+  /* ── window에 노출 ── */
+  window.Dashboard = { render };
+
+  /* ── 새로고침 버튼 ── */
+  document.getElementById('btn-dash-refresh')?.addEventListener('click', () => {
+    const icon = document.getElementById('refresh-icon');
+    if (icon) {
+      icon.classList.remove('spin-anim');
+      void icon.offsetWidth; // reflow
+      icon.classList.add('spin-anim');
+      icon.addEventListener('animationend', () => icon.classList.remove('spin-anim'), { once: true });
+    }
+    render();
+    window.showToast?.(_t('toast.refreshed', '대시보드를 새로고침했습니다.'), 'success');
+  });
+
+  /* ── 데이터 내보내기 ── */
+  document.getElementById('btn-export-all')?.addEventListener('click', () => {
+    const data = window.Storage.exportAll?.() || {
+      assets:  window.Storage.getData(window.Storage.KEYS.ASSETS),
+      prompts: window.Storage.getData(window.Storage.KEYS.PROMPTS),
+      youtube: window.Storage.getData(window.Storage.KEYS.YOUTUBE_JOBS),
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `inbody_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    window.showToast?.(_t('toast.exportDone', '내보내기 완료!'), 'success');
+  });
+
+  /* ── 데이터 가져오기 ── */
+  document.getElementById('import-file-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      if (window.Storage.importAll) {
+        window.Storage.importAll(json);
+      } else {
+        if (json.assets)  window.Storage.saveData(window.Storage.KEYS.ASSETS,       json.assets);
+        if (json.prompts) window.Storage.saveData(window.Storage.KEYS.PROMPTS,      json.prompts);
+        if (json.youtube) window.Storage.saveData(window.Storage.KEYS.YOUTUBE_JOBS, json.youtube);
+      }
+      window.updateBadges?.();
+      render();
+      window.showToast?.(_t('toast.importDone', '데이터를 성공적으로 가져왔습니다!'), 'success');
+    } catch {
+      window.showToast?.(_t('toast.importFail', '파일 형식이 올바르지 않습니다.'), 'error');
+    }
+    e.target.value = '';
+  });
+
+  /* ── 전체 초기화 ── */
+  document.getElementById('btn-clear-all')?.addEventListener('click', () => {
+    if (!confirm(_t('dashboard.resetConfirm','모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'))) return;
+    if (!confirm(_t('dashboard.resetConfirm2','정말로 삭제하시겠습니까?'))) return;
+    localStorage.removeItem('inbody_assets');
+    localStorage.removeItem('inbody_prompts');
+    localStorage.removeItem('inbody_youtube_jobs');
+    window.updateBadges?.();
+    render();
+    window.showToast?.(_t('toast.resetDone', '모든 데이터가 초기화되었습니다.'), 'success');
+  });
+
+  /* ── 언어 전환 시 재렌더 훅 ── */
+  window.currentPageRender = render;
+
+  /* ── 초기 렌더 ── */
+  render();
+})();
+</script>

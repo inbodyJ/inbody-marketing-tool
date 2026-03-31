@@ -1,0 +1,19 @@
+<!-- create.html — 에셋 생성 마법사 -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-i18n="create.wizardTitle">에셋 생성 마법사</h1>
+    <p class="page-subtitle" data-i18n="create.wizardSubtitle">단계별로 마케팅 에셋을 생성합니다.</p>
+  </div>
+</div>
+
+<div class="wizard-container">
+  <div class="wizard-progress" id="wizard-progress"></div>
+  <div id="wizard-content"></div>
+  <div class="wizard-nav">
+    <button class="btn btn-outline" id="wizard-prev" disabled data-i18n="create.prev">← 이전</button>
+    <div style="display:flex;gap:var(--space-3);align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="navigateTo('assets')" data-i18n="create.cancelBtn">취소</button>
+      <button class="btn btn-primary" id="wizard-next" data-i18n="create.next">다음 →</button>
+    </div>
+  </div>
+</div>
