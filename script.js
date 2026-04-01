@@ -13,8 +13,9 @@ const PAGES = {
   create:    { path: 'pages/create.html',    titleKey: 'create.title',  breadcrumbKey: 'nav.create' },
   assets:    { path: 'pages/assets.html',    titleKey: 'assets.title',  breadcrumbKey: 'nav.assets' },
   library:   { path: 'pages/library.html',   titleKey: 'library.title', breadcrumbKey: 'nav.library' },
-  youtube:   { path: 'pages/youtube.html',   titleKey: 'youtube.title', breadcrumbKey: 'nav.youtube' },
-  brand:     { path: 'pages/brand.html',     titleKey: 'brand.title',   breadcrumbKey: 'brand.title' },
+  youtube:   { path: 'pages/youtube.html',   titleKey: 'youtube.title',    breadcrumbKey: 'nav.youtube' },
+  brand:     { path: 'pages/brand.html',     titleKey: 'brand.title',      breadcrumbKey: 'brand.title' },
+  generator: { path: 'pages/generator.html', titleKey: 'nav.generator',    breadcrumbKey: 'nav.generator' },
 };
 
 /* 번역 헬퍼 (i18n.js 로드 전 안전 fallback) */
@@ -94,6 +95,9 @@ function initPage(pageKey) {
       break;
     case 'youtube':
       initYoutubePage();
+      break;
+    case 'generator':
+      // generator.js의 함수들이 inline으로 정의되어 있어 별도 init 불필요
       break;
   }
 }

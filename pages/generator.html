@@ -1,0 +1,212 @@
+<!-- pages/generator.html — 콘텐츠 생성기 -->
+
+<!-- 페이지 헤더 -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">콘텐츠 생성기</h1>
+    <p class="page-subtitle">Claude AI로 블로그, SNS 카피, PPT 제안서를 자동 생성합니다.</p>
+  </div>
+</div>
+
+<div class="generator-page">
+
+  <!-- ── 입력 폼 ── -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2 class="section-title">생성 설정</h2>
+    </div>
+
+    <div class="gen-form">
+
+      <!-- 콘텐츠 유형 -->
+      <div class="field-group">
+        <label class="field-label">콘텐츠 유형</label>
+        <select id="contentType" class="field-input" onchange="onTypeChange()">
+          <option value="blog">📝 네이버 블로그</option>
+          <option value="sns">📱 SNS 인스타그램</option>
+          <option value="ppt">📊 PPT 제안서</option>
+        </select>
+      </div>
+
+      <!-- 시장 -->
+      <div class="field-group">
+        <label class="field-label">타겟 시장</label>
+        <select id="market" class="field-input">
+          <option value="KR">🇰🇷 한국</option>
+          <option value="AU_FITNESS">🇦🇺 호주 피트니스</option>
+          <option value="AU_MEDICAL">🇦🇺 호주 메디컬</option>
+          <option value="AU_PHARMACY">🇦🇺 호주 약국</option>
+        </select>
+      </div>
+
+      <!-- 제품명 -->
+      <div class="field-group">
+        <label class="field-label">제품명</label>
+        <input id="product" class="field-input" placeholder="예: InBody970S">
+      </div>
+
+      <!-- 타겟 -->
+      <div class="field-group">
+        <label class="field-label">타겟 고객</label>
+        <input id="target" class="field-input" placeholder="예: 헬스장 운영자, 병원 원장">
+      </div>
+
+      <!-- 키워드 (블로그 전용) -->
+      <div class="field-group" id="field-keywords">
+        <label class="field-label">SEO 키워드</label>
+        <input id="keywords" class="field-input" placeholder="예: 체지방, 근육량, 건강관리">
+      </div>
+
+      <!-- 톤 (SNS 전용) -->
+      <div class="field-group" id="field-tone" style="display:none">
+        <label class="field-label">톤 앤 매너</label>
+        <select id="tone" class="field-input">
+          <option value="전문적">전문적</option>
+          <option value="친근한">친근한</option>
+          <option value="동기부여">동기부여</option>
+          <option value="informative">Informative</option>
+        </select>
+      </div>
+
+      <!-- 생성 버튼 -->
+      <button class="btn btn-primary" onclick="generate()" id="gen-btn">
+        <span id="gen-btn-label">✨ 생성하기</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── 결과 영역 ── -->
+  <div class="section-card" id="result-section" style="display:none">
+    <div class="section-header">
+      <h2 class="section-title">생성 결과</h2>
+      <div style="display:flex;gap:var(--space-2)">
+        <button class="btn btn-outline btn-sm" onclick="copyResult()">📋 복사</button>
+        <button class="btn btn-primary btn-sm" id="downloadBtn" style="display:none" onclick="downloadPPT()">
+          ⬇️ PPT 다운로드
+        </button>
+      </div>
+    </div>
+    <div id="result-preview" class="result-preview"></div>
+  </div>
+
+</div>
+
+<style>
+.generator-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.gen-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.result-preview {
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  padding: var(--space-4);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  min-height: 200px;
+}
+</style>
+
+<script>
+let _pptBlob = null;
+let _pptFilename = '';
+
+function onTypeChange() {
+  const type = document.getElementById('contentType').value;
+  document.getElementById('field-keywords').style.display = type === 'blog' ? '' : 'none';
+  document.getElementById('field-tone').style.display     = type === 'sns'  ? '' : 'none';
+}
+
+async function generate() {
+  const type    = document.getElementById('contentType').value;
+  const market  = document.getElementById('market').value;
+  const product = document.getElementById('product').value.trim();
+  const target  = document.getElementById('target').value.trim();
+
+  if (!product || !target) {
+    showToast('제품명과 타겟 고객을 입력해주세요.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('gen-btn');
+  const label = document.getElementById('gen-btn-label');
+  btn.disabled = true;
+  label.textContent = '생성 중...';
+  _pptBlob = null;
+
+  try {
+    const API_BASE = window.API_BASE || 'http://localhost:5000';
+
+    if (type === 'blog') {
+      const keywords = document.getElementById('keywords').value.trim();
+      const res = await fetch(`${API_BASE}/api/generate/blog`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product, target, keywords })
+      });
+      const data = await res.json();
+      showResult(data.content);
+
+    } else if (type === 'sns') {
+      const tone = document.getElementById('tone').value;
+      const res = await fetch(`${API_BASE}/api/generate/sns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product, target, market, tone })
+      });
+      const data = await res.json();
+      showResult(data.content);
+
+    } else if (type === 'ppt') {
+      const res = await fetch(`${API_BASE}/api/generate/ppt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product, target, market })
+      });
+      _pptBlob = await res.blob();
+      _pptFilename = `InBody_${product}_proposal.pptx`;
+      showResult('PPT가 생성되었습니다.\n아래 버튼을 눌러 다운로드하세요.');
+      document.getElementById('downloadBtn').style.display = '';
+    }
+
+  } catch (err) {
+    showToast('생성 중 오류가 발생했습니다.', 'error');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    label.textContent = '✨ 생성하기';
+  }
+}
+
+function showResult(text) {
+  document.getElementById('result-section').style.display = '';
+  document.getElementById('result-preview').textContent = text;
+  document.getElementById('downloadBtn').style.display = 'none';
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyResult() {
+  const text = document.getElementById('result-preview').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('복사되었습니다.', 'success'));
+}
+
+function downloadPPT() {
+  if (!_pptBlob) return;
+  const url = URL.createObjectURL(_pptBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = _pptFilename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>

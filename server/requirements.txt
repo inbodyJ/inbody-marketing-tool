@@ -1,13 +1,8 @@
 flask
 flask-cors
 anthropic
-openai
-google-generativeai
-yt-dlp
-ffmpeg-python
+python-pptx
 python-dotenv
 requests
-python-pptx
-pymupdf
-Pillow
+yt-dlp
 youtube-transcript-api

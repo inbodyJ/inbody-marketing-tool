@@ -25,6 +25,8 @@ from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, No
 from flask import Flask, request, jsonify, send_file, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
+from claude_service import generate_blog as claude_blog, generate_sns as claude_sns, generate_ppt_content as claude_ppt_content
+from ppt_generator import create_ppt
 
 # ─── 경로 설정 ────────────────────────────────────────────────────────────────
 SERVER_DIR  = Path(__file__).resolve().parent   # .../server/
@@ -2538,6 +2540,54 @@ def canva_test():
     return jsonify({"status": "ok" if all_ok else "설정 필요", **result})
 
 
+@app.route("/callback")
+def callback():
+    code = request.args.get("code")
+    if not code:
+        return {"error": "No code received"}
+    return {"message": "로그인 성공!", "code": code}
+
+
+# ── 블로그 생성 ────────────────────────────────────────────────────────────────
+@app.route('/api/generate/blog', methods=['POST'])
+def blog():
+    data = request.json
+    result = claude_blog(
+        data['product'],
+        data['target'],
+        data['keywords']
+    )
+    return jsonify({'content': result})
+
+
+# ── SNS 카피 생성 ──────────────────────────────────────────────────────────────
+@app.route('/api/generate/sns', methods=['POST'])
+def sns():
+    data = request.json
+    result = claude_sns(
+        data['product'],
+        data['target'],
+        data['market'],
+        data['tone']
+    )
+    return jsonify({'content': result})
+
+
+# ── PPT 생성 ───────────────────────────────────────────────────────────────────
+@app.route('/api/generate/ppt', methods=['POST'])
+def ppt():
+    data = request.json
+    slides_json = claude_ppt_content(
+        data['product'],
+        data['target'],
+        data['market']
+    )
+    slides = json.loads(slides_json)
+    filepath = create_ppt(slides, data['product'])
+    return send_file(filepath, as_attachment=True,
+                     download_name=f"InBody_{data['product']}_proposal.pptx")
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # 오류 핸들러
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2579,17 +2629,3 @@ if __name__ == "__main__":
         logger.warning("yt-dlp가 설치되어 있지 않습니다: pip install yt-dlp")
 
     app.run(host="0.0.0.0", port=port, debug=debug)
-
-from flask import request
-
-@app.route("/callback")
-def callback():
-    code = request.args.get("code")
-    
-    if not code:
-        return {"error": "No code received"}
-    
-    return {
-        "message": "로그인 성공!",
-        "code": code
-    }
